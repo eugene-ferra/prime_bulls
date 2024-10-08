@@ -1,0 +1,375 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PG_DATABASE_URL")
+}
+
+model Product {
+  id Int @id @default(autoincrement())
+  title String
+  subtitle String?
+  description String
+  categoryId Int
+  slug String @unique
+  basePrice Decimal
+  salePercent Int?
+  coverImageUrl String?
+  coverImageMimeType String?
+  coverImageAltText String?
+  isActive Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  images ProductImage[] 
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  attributes ProductAttribute[]
+  reviews Review[]
+  productVariants ProductVariant[]
+  cartItems CartItem[]
+  savedProducts SavedProduct[]
+  orderItems OrderItem[]
+}
+
+model Variant {
+  id Int @id @default(autoincrement())
+  name String
+
+  productVariants ProductVariant[]
+}
+
+model ProductVariant{
+  id Int @id @default(autoincrement())
+  variantId Int
+  productId Int
+  label String
+  effectType PriceEffectType 
+  amount Float
+  
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id Int @id @default(autoincrement())
+  name String
+  slug String @unique
+  iconUrl String?
+  mimeType String?
+  altText String?
+  isActive Boolean @default(false) 
+  createdAt DateTime @default(now())
+
+  products Product[] 
+}
+
+model Attribute {
+  id Int @id @default(autoincrement())
+  name String
+
+  productAttributes ProductAttribute[]
+}
+
+model ProductAttribute {
+  id Int @id @default(autoincrement())
+  productId Int
+  attributeId Int
+  value String
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attribute Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id Int @id @default(autoincrement())
+  productId Int
+  userId Int
+  rating Int?
+  comment String
+  parentReviewId Int?
+  createdAt DateTime @default(now())
+  isModerated Boolean @default(false)
+
+  parentReview Review? @relation("ReviewParentReview", fields: [parentReviewId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  review Review[] @relation("ReviewParentReview")
+  images ReviewImage[] 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes ReviewLike[] 
+
+  @@unique([productId, userId])
+}
+
+model Post {
+  id Int @id @default(autoincrement())
+  title String
+  slug String @unique
+  content String
+  coverImageUrl String?
+  coverMimeType String?
+  coverImageAltText String?
+  isActive Boolean @default(false) 
+  createdAt DateTime @default(now())
+
+  topics PostTopic[]
+  comments Comment[]
+  views View[]
+  likes PostLike[]
+}
+
+model View {
+  id Int @id @default(autoincrement())
+  postId Int
+  ip String
+  userAgent String
+
+  Post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@unique([postId, ip, userAgent])
+}
+
+model Topic {
+  id Int @id @default(autoincrement())
+  name String
+  slug String @unique
+  isActive Boolean @default(false) 
+  createdAt DateTime @default(now())
+
+  posts PostTopic[]
+}
+
+model PostTopic {
+  id Int @id @default(autoincrement())
+  postId Int
+  topicId Int
+
+  post Post @relation(fields: [postId], references: [id],  onDelete: Cascade)
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id Int @id @default(autoincrement())
+  postId Int
+  content String
+  userId Int
+  parentCommentId Int?
+  createdAt DateTime @default(now())
+  isModerated Boolean @default(false)
+
+  parentComment Comment? @relation("CommentParentComment", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comments Comment[] @relation("CommentParentComment")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes CommentLike[] 
+}
+
+model ProductImage {
+  id Int @id @default(autoincrement())
+  productId Int
+  url String
+  altText String?
+  mimeType String?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ReviewImage {
+  id Int @id @default(autoincrement())
+  reviewId Int
+  url String
+  mimeType String
+  altText String?
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  name String
+  lastName String?
+  phone String @unique
+  email String @unique
+  imageUrl String?
+  mimeType String?
+  altText String?
+  password String
+  passwordResetToken String?
+  passwordResetTokenExpiredAt DateTime?
+  verificationCode String?
+  verificationCodeExpiredAt DateTime?
+  isActive Boolean @default(false) 
+  createdAt DateTime @default(now())
+  role UserRole
+
+  reviews Review[] 
+  comments Comment[]
+  orders Order[]
+  tokens Token[]
+  cartItems CartItem[]
+  commentLikes CommentLike[]
+  reviewLikes ReviewLike[]
+  postLikes PostLike[]
+  addresses Address[]
+  savedProducts SavedProduct[]
+  oAuth OAuth[]
+
+}
+
+model OAuth{
+  id Int @id @default(autoincrement())
+  userId Int
+  provider String
+  uid String
+  accessToken String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+  id Int @id @default(autoincrement())
+  userId Int
+  city String
+  street String
+  houseNumber String
+  flatNumber String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CartItem {
+  id Int @id @default(autoincrement())
+  productId Int
+  userId Int
+  quantity Int @default(1)
+
+  Product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SavedProduct {
+  id Int @id @default(autoincrement())
+  userId Int
+  productId Int
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Token {
+  id Int @id @default(autoincrement())
+  userId Int
+  token String
+  expiredAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device Device[] 
+}
+
+model Device {
+  id Int @id @default(autoincrement())
+  tokerId Int
+  ip String
+  userAgent String
+    
+  token Token @relation(fields: [tokerId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id Int @id @default(autoincrement())
+  userId Int?
+  status OrderStatus
+  createdAt DateTime @default(now())
+  updatedAt DateTime?
+  deliveryType DeliveryType
+  postAddress String?
+  city String?
+  street String?
+  houseNumber String?
+  flatNumber String?
+  couponId Int?
+  
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orderItem OrderItem[]
+  coupon Coupon? @relation(fields: [couponId], references: [id])
+}
+
+model OrderItem {
+  id Int @id @default(autoincrement())
+  productId Int
+  orderId Int
+  quantity Int
+  price Int
+  
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+}
+
+model Coupon {
+  id Int @id @default(autoincrement())
+  code String
+  discount Int
+  expiredAt DateTime
+
+  orders Order[]
+}
+
+model ReviewLike{
+  id Int @id @default(autoincrement())
+  userId Int
+  reviewId Int
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+}
+
+model PostLike{
+  id Int @id @default(autoincrement())
+  userId Int
+  postId Int
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CommentLike{
+  id Int @id @default(autoincrement())
+  userId Int
+  commentId Int
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+}
+
+enum DeliveryType {
+  POST
+  COURIER
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  DELIVERING
+  COMPLETED
+  CANCELLED
+}
+
+enum UserRole {
+  ADMIN
+  WORKER
+  USER
+}
+
+enum PriceEffectType {
+  MULTIPLIER 
+  FIXED      
+  PERCENT
+}
