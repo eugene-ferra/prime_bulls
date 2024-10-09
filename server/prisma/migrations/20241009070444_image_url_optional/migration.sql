@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "ProductImage" ALTER COLUMN "url" DROP NOT NULL;
+
+-- AlterTable
+ALTER TABLE "ReviewImage" ALTER COLUMN "url" DROP NOT NULL,
+ALTER COLUMN "mimeType" DROP NOT NULL;

@@ -5,6 +5,7 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "type": "module",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -20,13 +21,25 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@adminjs/express": "^6.1.0",
+    "@adminjs/nestjs": "^6.1.0",
+    "@adminjs/prisma": "^5.0.3",
+    "@adminjs/relations": "^1.1.2",
+    "@adminjs/themes": "^1.0.1",
+    "@adminjs/upload": "^4.0.2",
     "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.2.3",
     "@nestjs/core": "^10.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^10.0.0",
     "@prisma/client": "^5.20.0",
+    "adminjs": "^7.8.13",
+    "express-formidable": "^1.2.0",
+    "express-session": "^1.18.0",
+    "minio": "^8.0.1",
     "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "slugify": "^1.6.6"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

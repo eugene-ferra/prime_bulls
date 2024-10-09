@@ -172,7 +172,7 @@ model Comment {
 model ProductImage {
   id Int @id @default(autoincrement())
   productId Int
-  url String
+  url String?
   altText String?
   mimeType String?
 
@@ -182,8 +182,8 @@ model ProductImage {
 model ReviewImage {
   id Int @id @default(autoincrement())
   reviewId Int
-  url String
-  mimeType String
+  url String?
+  mimeType String?
   altText String?
 
   review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)

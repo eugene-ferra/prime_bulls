@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "module": "Node16",
-    "moduleResolution": "Node16",
+    "jsx": "react",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
+    "allowJs": true,
     "target": "ESNext",
     "sourceMap": true,
     "outDir": "./dist",
@@ -20,3 +22,5 @@
     "noFallthroughCasesInSwitch": false
   }
 }
+
+// "include":["src/**/*"]
