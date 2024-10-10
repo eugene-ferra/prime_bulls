@@ -5,13 +5,15 @@ export class ParseQueryPipe implements PipeTransform {
   transform(value: any, metadata: ArgumentMetadata) {
     if (typeof value === 'object' && value !== null) {
       for (const key in value) {
-        const parsedArray = this.parseArray(value[key]);
-        if (parsedArray) {
-          value[key] = parsedArray;
+        if (typeof value[key] === 'string') {
+          const parsedArray = this.parseArray(value[key]);
+          if (parsedArray) {
+            value[key] = parsedArray;
+          }
         }
 
-        if (value[key] === 'true' || key === 'false') value[key] = key === 'true';
         if (!isNaN(+value[key])) value[key] = +value[key];
+        if (value[key] === 'true' || value[key] === 'false') value[key] = value[key] === 'true';
       }
     }
 
