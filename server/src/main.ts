@@ -8,11 +8,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const config = new DocumentBuilder()
-    .setTitle('Prime Bulls API')
-    .setVersion('1.0')
-    .addTag('products')
-    .build();
+  const config = new DocumentBuilder().setTitle('Prime Bulls API').setVersion('1.0').build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
