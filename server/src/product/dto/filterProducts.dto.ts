@@ -1,25 +1,25 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class FilterProductsDto {
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   title?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   subtitle?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   categoryId?: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   slug?: string;
@@ -36,18 +36,30 @@ export class FilterProductsDto {
   @Type(() => Number)
   salePercent?: [number, number];
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiProperty({ required: false })
+  // TODO: add sorting by rating
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsIn(['basePrice'])
+  orderBy?: string;
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  orderMode?: string;
+
+  @ApiPropertyOptional()
   @IsOptional()
   @IsInt()
   @Min(1)
   page?: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsInt()
   @Min(1)

@@ -20,7 +20,7 @@ model Product {
   description String
   categoryId Int
   slug String @unique
-  basePrice Decimal
+  basePrice Float
   salePercent Int?
   coverImageUrl String?
   coverImageMimeType String?
@@ -304,7 +304,7 @@ model OrderItem {
   productId Int
   orderId Int
   quantity Int
-  price Int
+  price Float
   
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
