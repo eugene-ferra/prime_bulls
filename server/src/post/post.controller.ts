@@ -10,7 +10,7 @@ import {
 import { PostService } from './post.service.js';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { FilterPostsDto } from './dto/filterPosts.dto.js';
-import { SimplePostEntity } from './dto/simplePostEntity.js';
+import { SimplePostEntity } from './entities/simplePostEntity.js';
 
 @ApiTags('posts')
 @Controller('posts')
@@ -26,25 +26,16 @@ export class PostController {
   @UseInterceptors(ClassSerializerInterceptor)
   @Get('/')
   async findAll(@Query() query: FilterPostsDto) {
-    const { where, page, limit } = this.postService.toPrismaSearch(query);
-    const data = await this.postService.findAll({
-      where,
-      include: { topics: { include: { topic: true } } },
-      page,
-      limit,
-    });
+    const data = await this.postService.findAll(query);
 
-    if (!data.length) throw new NotFoundException();
-
-    const docs = await this.postService.countDocs(where);
+    if (!data.data.length) throw new NotFoundException();
 
     return {
-      data: data.map((item) => {
+      docs: data.data.map((item) => {
         return new SimplePostEntity(item);
       }),
-      currentPage: page,
-      lastPage: Math.ceil(docs / limit),
-      length: data.length,
+      lastPage: data.lastPage,
+      length: data.data.length,
     };
   }
 
@@ -56,7 +47,7 @@ export class PostController {
   })
   @Get(':slug')
   async findOne(@Param('slug') slug: string): Promise<SimplePostEntity> {
-    const post = await this.postService.findBySlug(slug, { topics: { include: { topic: true } } });
+    const post = await this.postService.findBySlug(slug);
 
     if (!post) {
       throw new NotFoundException();

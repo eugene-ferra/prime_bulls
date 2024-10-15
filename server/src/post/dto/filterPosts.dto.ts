@@ -17,6 +17,16 @@ export class FilterPostsDto {
   @IsBoolean()
   isActive?: boolean;
 
+  @ApiPropertyOptional({ enum: ['createdAt'] })
+  @IsOptional()
+  @IsIn(['createdAt'])
+  orderBy?: string;
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  orderMode?: string;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsInt()

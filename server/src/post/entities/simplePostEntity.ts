@@ -23,20 +23,12 @@ export class SimplePostEntity {
 
   @ApiProperty({ type: () => PostImageEntity })
   @Expose()
-  @Transform(({ obj }) => ({
-    url: obj.coverImageUrl,
-    altText: obj.coverImageAltText,
-  }))
+  @Transform(({ obj }) => new PostImageEntity({ url: obj.coverImageUrl, altText: obj.coverImageAltText }))
   coverImage: PostImageEntity;
 
   @ApiProperty({ type: () => [TopicEntity] })
   @Expose()
-  @Transform(({ value }) =>
-    value.map((item) => ({
-      name: item.topic.name,
-      slug: item.topic.slug,
-    })),
-  )
+  @Transform(({ value }) => value.map((item) => new TopicEntity(item.topic)))
   topics: PostTopicEntity[];
 
   // TODO: add views and likes data

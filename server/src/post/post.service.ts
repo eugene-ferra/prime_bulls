@@ -7,45 +7,61 @@ import { FilterPostsDto } from './dto/filterPosts.dto.js';
 export class PostService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(payload: {
-    where: Prisma.PostWhereInput;
-    include?: Prisma.PostInclude;
-    page?: number;
-    limit?: number;
-  }) {
-    const currentPage = payload.page || 1;
-    const take = payload.limit || 12;
-    const skip = currentPage * take - take;
-    const include = payload.include || {};
-    const where = payload.where;
+  async findAll(payload: FilterPostsDto) {
+    const where = this.getWhereClause(payload);
+    const orderBy = this.getOrderByClause(payload);
+    const { skip, take } = this.getPagination(payload);
+    const include = this.getDefaultInclude();
 
-    return await this.prisma.post.findMany({ where, include, orderBy: { createdAt: 'desc' }, skip, take });
+    const [posts, totalDocs] = await Promise.all([
+      this.prisma.post.findMany({ where, include, orderBy: { createdAt: 'desc' }, skip, take }),
+      this.countDocs(where),
+    ]);
+
+    return {
+      data: posts,
+      currentPage: payload.page,
+      lastPage: Math.ceil(totalDocs / take),
+    };
   }
 
   async findById(id: number, include?: Prisma.PostInclude) {
-    return await this.prisma.post.findUnique({ where: { id }, include });
+    return await this.prisma.post.findUnique({ where: { id }, include: this.getDefaultInclude() });
   }
 
-  async findBySlug(slug: string, include?: Prisma.PostInclude) {
-    return await this.prisma.post.findFirst({ where: { slug }, include });
+  async findBySlug(slug: string) {
+    return await this.prisma.post.findFirst({ where: { slug }, include: this.getDefaultInclude() });
   }
 
-  async countDocs(input: Prisma.PostWhereInput) {
+  private async countDocs(input: Prisma.PostWhereInput) {
     return await this.prisma.post.count({ where: input });
   }
 
-  toPrismaSearch(payload: FilterPostsDto) {
+  private getWhereClause(payload: FilterPostsDto): Prisma.PostWhereInput {
     let where: Prisma.PostWhereInput = {};
-    let page: number = 1,
-      limit: number = 12;
 
     if (payload.title) where.title = { contains: payload.title, mode: 'insensitive' };
     if (payload.slug) where.slug = { contains: payload.slug, mode: 'insensitive' };
     if (payload.isActive) where.isActive = payload.isActive === true;
 
-    if (payload.page) page = payload.page;
-    if (payload.limit) limit = payload.limit;
+    return where;
+  }
 
-    return { where, page, limit };
+  private getOrderByClause(payload: FilterPostsDto): Prisma.ProductOrderByWithRelationInput {
+    return { [payload.orderBy || 'createdAt']: payload.orderMode || 'asc' };
+  }
+
+  private getPagination(payload: FilterPostsDto): { skip: number; take: number } {
+    const page = payload.page || 1;
+    const limit = payload.limit || 12;
+
+    const skip = (page - 1) * limit;
+    return { skip, take: limit };
+  }
+
+  private getDefaultInclude(): Prisma.PostInclude {
+    return {
+      topics: { include: { topic: true } },
+    };
   }
 }
