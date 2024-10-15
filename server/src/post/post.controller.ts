@@ -1,8 +1,16 @@
-import { Controller, Get, NotFoundException, Param, Query } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { PostService } from './post.service.js';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { FilterPostsDto } from './dto/filterPosts.dto.js';
-import { getFiltersFromQuery } from './getFiltersFromQuery.js';
+import { SimplePostEntity } from './dto/simplePostEntity.js';
 
 @ApiTags('posts')
 @Controller('posts')
@@ -11,28 +19,49 @@ export class PostController {
 
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
-  @ApiOkResponse()
+  @ApiOkResponse({
+    description: 'Retrieves all posts based on query string with filters and pagination',
+    type: [SimplePostEntity],
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get('/')
   async findAll(@Query() query: FilterPostsDto) {
-    const { where, page, limit } = getFiltersFromQuery(query);
-    const products = await this.postService.findAll({ where, page, limit });
+    const { where, page, limit } = this.postService.toPrismaSearch(query);
+    const data = await this.postService.findAll({
+      where,
+      include: { topics: { include: { topic: true } } },
+      page,
+      limit,
+    });
 
-    if (!products.data.length) throw new NotFoundException();
+    if (!data.length) throw new NotFoundException();
 
-    return products;
+    const docs = await this.postService.countDocs(where);
+
+    return {
+      data: data.map((item) => {
+        return new SimplePostEntity(item);
+      }),
+      currentPage: page,
+      lastPage: Math.ceil(docs / limit),
+      length: data.length,
+    };
   }
 
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
-  @ApiOkResponse()
+  @ApiOkResponse({
+    description: 'Retrieves posts based on slug',
+    type: SimplePostEntity,
+  })
   @Get(':slug')
-  async findOne(@Param('slug') slug: string) {
-    const product = await this.postService.findBySlug(slug);
+  async findOne(@Param('slug') slug: string): Promise<SimplePostEntity> {
+    const post = await this.postService.findBySlug(slug, { topics: { include: { topic: true } } });
 
-    if (!product) {
+    if (!post) {
       throw new NotFoundException();
     }
 
-    return product;
+    return new SimplePostEntity(post);
   }
 }

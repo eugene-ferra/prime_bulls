@@ -24,8 +24,8 @@ export class ProductService {
     return await this.prisma.product.findMany({ where, include, orderBy, skip, take });
   }
 
-  async findById(id: number) {
-    return await this.prisma.product.findUnique({ where: { id } });
+  async findById(id: number, include?: Prisma.ProductInclude) {
+    return await this.prisma.product.findUnique({ where: { id }, include });
   }
 
   async findBySlug(slug: string, include?: Prisma.ProductInclude) {
