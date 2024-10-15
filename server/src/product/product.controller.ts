@@ -10,8 +10,8 @@ import {
 import { ProductService } from './product.service.js';
 import { FilterProductsDto } from './dto/filterProducts.dto.js';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { ExpandedProductEntity } from './dto/expandedProductEntity.js';
-import { SimpleProductEntity } from './dto/simpleProductEntity.js';
+import { ExpandedProductEntity } from './entities/expandedProductEntity.js';
+import { SimpleProductEntity } from './entities/simpleProductEntity.js';
 
 @ApiTags('products')
 @Controller('products')
@@ -24,27 +24,19 @@ export class ProductController {
     description: 'Retrieves all products based on query string with filters, sorting and pagination',
     type: [SimpleProductEntity],
   })
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get('/')
   async findAll(@Query() query: FilterProductsDto) {
-    const { where, page, limit, orderBy } = this.productService.toPrismaSearch(query);
-    const products = await this.productService.findAll({
-      where,
-      orderBy,
-      page,
-      limit,
-      include: { category: true },
-    });
-    const docs = await this.productService.countDocs(where);
+    const data = await this.productService.findAll(query);
 
-    if (!products.length) throw new NotFoundException();
+    if (!data.data.length) throw new NotFoundException();
 
     return {
-      data: products.map((item) => {
+      docs: data.data.map((item) => {
         return new SimpleProductEntity(item);
       }),
-      currentPage: page,
-      lastPage: Math.ceil(docs / limit),
-      length: products.length,
+      lastPage: data.lastPage,
+      length: data.data.length,
     };
   }
 
@@ -54,16 +46,7 @@ export class ProductController {
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':slug')
   async findOne(@Param('slug') slug: string): Promise<ExpandedProductEntity> {
-    const product = await this.productService.findBySlug(slug, {
-      category: true,
-      images: true,
-      attributes: {
-        include: { attribute: true },
-      },
-      productVariants: {
-        include: { variant: true },
-      },
-    });
+    const product = await this.productService.findBySlug(slug);
 
     if (!product) {
       throw new NotFoundException();

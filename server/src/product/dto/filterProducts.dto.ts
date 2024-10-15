@@ -43,9 +43,9 @@ export class FilterProductsDto {
 
   // TODO: add sorting by rating
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ enum: ['basePrice', 'createdAt'] })
   @IsOptional()
-  @IsIn(['basePrice'])
+  @IsIn(['basePrice', 'createdAt'])
   orderBy?: string;
 
   @ApiPropertyOptional({ enum: ['asc', 'desc'] })

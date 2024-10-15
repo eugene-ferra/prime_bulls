@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { ProductImageEntity } from './productImageEntity.js';
-import { CategoryEntity } from './productCategoryEntity.js';
+import { ProductCategoryEntity } from './productCategoryEntity.js';
 
 @Exclude()
 export class SimpleProductEntity {
@@ -21,13 +21,10 @@ export class SimpleProductEntity {
   @Expose()
   subtitle: string;
 
-  @ApiProperty({ type: () => CategoryEntity })
+  @ApiProperty()
   @Expose()
-  @Transform(({ value }) => ({
-    name: value.name,
-    slug: value.slug,
-  }))
-  category: CategoryEntity;
+  @Transform(({ value }) => new ProductCategoryEntity(value))
+  category: ProductCategoryEntity;
 
   @ApiProperty()
   @Expose()
@@ -39,11 +36,10 @@ export class SimpleProductEntity {
 
   @ApiProperty({ type: () => ProductImageEntity })
   @Expose()
-  @Transform(({ obj }) => ({
-    url: obj.coverImageUrl,
-    altText: obj.coverImageAltText,
-  }))
+  @Transform(({ obj }) => new ProductImageEntity({ url: obj.coverImageUrl, altText: obj.coverImageAltText }))
   coverImage: ProductImageEntity;
+
+  // TODO: add reviews data
 
   constructor(partial: Partial<SimpleProductEntity>) {
     Object.assign(this, partial);
