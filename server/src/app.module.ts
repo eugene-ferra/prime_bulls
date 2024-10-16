@@ -4,6 +4,7 @@ import { AdminModuleModule } from './admin-module/admin-module.module.js';
 import { ConfigModule } from '@nestjs/config';
 import { ProductModule } from './product/product.module.js';
 import { PostModule } from './post/post.module.js';
+import { UserModule } from './user/user.module.js';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { PostModule } from './post/post.module.js';
     AdminModuleModule,
     ProductModule,
     PostModule,
+    UserModule,
   ],
   controllers: [],
   providers: [PrismaService],

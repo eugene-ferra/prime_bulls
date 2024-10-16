@@ -193,14 +193,15 @@ model User {
   id Int @id @default(autoincrement())
   name String
   lastName String?
-  phone String @unique
-  email String @unique
+  phone String? @unique
+  email String? @unique
   imageUrl String?
   mimeType String?
   altText String?
   password String
   passwordResetToken String?
   passwordResetTokenExpiredAt DateTime?
+  isVerified Boolean @default(false)
   verificationCode String?
   verificationCodeExpiredAt DateTime?
   isActive Boolean @default(false) 
