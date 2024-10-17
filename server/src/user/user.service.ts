@@ -15,7 +15,9 @@ export class UserService {
 
     const hashedPassword = await this.hashPassword(createUserDto.password);
 
-    await this.prisma.user.create({ data: { ...createUserDto, password: hashedPassword, role: 'USER' } });
+    return await this.prisma.user.create({
+      data: { ...createUserDto, password: hashedPassword, role: 'USER' },
+    });
   }
 
   async findByEmail(email: string) {
@@ -40,11 +42,9 @@ export class UserService {
 
     if (!user) throw new NotFoundException();
     if (newPassword !== newPasswordConfirm) throw new BadRequestException();
+    if (!(await this.isCorrectPassword(oldPassword, user.password))) throw new BadRequestException();
 
     const newHashedPassword = await this.hashPassword(newPassword);
-
-    if (!(await this.isCorrectPassword(newHashedPassword, user.password))) throw new BadRequestException();
-
     return await this.prisma.user.update({ where: { id }, data: { password: newHashedPassword } });
   }
 
@@ -54,7 +54,9 @@ export class UserService {
     return await bcrypt.hash(password, salt);
   }
 
-  async isCorrectPassword(testHash: string, hashedPassword: string) {
+  async isCorrectPassword(testPassword: string, hashedPassword: string) {
+    const testHash = await this.hashPassword(testPassword);
+
     return bcrypt.compare(testHash, hashedPassword);
   }
 

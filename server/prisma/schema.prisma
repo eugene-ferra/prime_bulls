@@ -265,21 +265,15 @@ model SavedProduct {
 model Token {
   id Int @id @default(autoincrement())
   userId Int
-  token String
-  expiredAt DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  device Device[] 
-}
-
-model Device {
-  id Int @id @default(autoincrement())
-  tokerId Int
   ip String
   userAgent String
-    
-  token Token @relation(fields: [tokerId], references: [id], onDelete: Cascade)
+  token String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, ip, userAgent])
 }
+
+
 
 model Order {
   id Int @id @default(autoincrement())
