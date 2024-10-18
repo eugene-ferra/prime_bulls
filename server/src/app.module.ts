@@ -6,6 +6,7 @@ import { ProductModule } from './product/product.module.js';
 import { PostModule } from './post/post.module.js';
 import { UserModule } from './user/user.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { MailModule } from './mail/mail.module.js';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AuthModule } from './auth/auth.module.js';
     PostModule,
     UserModule,
     AuthModule,
+    MailModule,
   ],
   controllers: [],
   providers: [PrismaService],
