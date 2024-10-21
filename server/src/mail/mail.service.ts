@@ -9,7 +9,7 @@ export class MailService {
     await this.mailerService.sendMail({
       to: email,
       subject: 'Аккаунт успішно створено!',
-      template: './templates/welcome',
+      template: './welcome',
       context: {
         name: name,
       },

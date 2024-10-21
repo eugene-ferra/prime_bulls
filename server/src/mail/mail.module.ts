@@ -4,6 +4,11 @@ import { Module } from '@nestjs/common';
 import { MailService } from './mail.service.js';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 @Module({
   imports: [
@@ -22,8 +27,9 @@ import { ConfigService } from '@nestjs/config';
         },
         template: {
           adapter: new EjsAdapter(),
+          dir: join(__dirname, 'templates'),
           options: {
-            strict: true,
+            strict: false,
           },
         },
       }),

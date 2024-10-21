@@ -4,9 +4,11 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ResponseFormatInterceptor } from './interceptors/responseFormat.interceptor.js';
 import { ParseQueryPipe } from './pipes/parseQuery.pipe.js';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser());
 
   const config = new DocumentBuilder().setTitle('Prime Bulls API').setVersion('1.0').build();
   const document = SwaggerModule.createDocument(app, config);

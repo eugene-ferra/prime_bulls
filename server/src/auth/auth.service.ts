@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service.js';
 import { TokensDto } from './dto/tokens.dto.js';
-import { registerByEmailDto } from './dto/registerByEmail.dto.js';
+import { RegisterByEmailDto } from './dto/registerByEmail.dto.js';
 import { LoginByEmailDto } from './dto/loginByEmail.dto.js';
 import { JwtService } from '@nestjs/jwt';
 import { TokenPayloadDto } from './dto/tokenPayload.dto.js';
@@ -18,7 +18,7 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async registerByEmail(data: registerByEmailDto, device: DeviceDto): Promise<TokensDto> {
+  async registerByEmail(data: RegisterByEmailDto, device: DeviceDto): Promise<TokensDto> {
     const { id, role } = await this.userService.create(data);
     const { accessToken, refreshToken } = await this.generateTokens({ id, role });
     await this.saveSession(id, refreshToken, device);
@@ -54,14 +54,24 @@ export class AuthService {
   }
 
   private async saveSession(userId: number, token: string, device: DeviceDto) {
+    const session = await this.prisma.token.findFirst({
+      where: { userId, ip: device.ip, userAgent: device.userAgent },
+    });
+
+    if (session) return;
+
     await this.prisma.token.create({
       data: { userId, token, ...device },
     });
   }
 
   private async removeSession(userId: number, device: DeviceDto) {
-    const { ip, userAgent } = device;
-    const session = await this.prisma.token.findFirst({ where: { userId, ip, userAgent } });
+    const session = await this.prisma.token.findFirst({
+      where: { userId: userId, ip: device.ip, userAgent: device.userAgent },
+    });
+
+    if (!session) throw new BadRequestException('invalid session');
+
     await this.prisma.token.delete({ where: { id: session.id } });
   }
 
@@ -69,27 +79,49 @@ export class AuthService {
     await this.prisma.token.deleteMany({ where: { userId } });
   }
 
-  async isRefreshValid(token: string) {
-    return await this.jwtService.verifyAsync(token, { secret: 'refresh_secret' });
+  async decodeRefresh(token: string) {
+    await this.jwtService.verifyAsync(token, {
+      secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
+    });
+
+    return this.jwtService.decode(token);
   }
 
-  async isAccessValid(token: string) {
-    return await this.jwtService.verifyAsync(token, { secret: 'access_secret' });
+  async decodeAccess(token: string) {
+    await this.jwtService.verifyAsync(token, {
+      secret: this.configService.getOrThrow('JWT_ACCESS_SECRET'),
+    });
+
+    return this.jwtService.decode(token);
   }
 
-  async refresh(userId: number, device: DeviceDto): Promise<TokensDto> {
-    const { id, role } = await this.userService.findById(userId);
+  async refresh(token: string, device: DeviceDto): Promise<TokensDto> {
+    const decoded = await this.decodeRefresh(token);
+
+    if (!decoded || !decoded.id) throw new BadRequestException();
+
+    const { id, role } = await this.userService.findById(decoded.id);
     const tokens = await this.generateTokens({ id, role });
-    await this.saveSession(userId, tokens.refreshToken, device);
+    await this.saveSession(id, tokens.refreshToken, device);
 
     return tokens;
   }
 
-  async logout(userId: number, device: DeviceDto) {
-    await this.removeSession(userId, device);
+  async logout(token: string, device: DeviceDto) {
+    const decoded = await this.decodeRefresh(token);
+    if (!decoded || !decoded.id) throw new BadRequestException();
+
+    const { id } = await this.userService.findById(decoded.id);
+
+    await this.removeSession(id, device);
   }
 
-  async logoutFromAll(userId: number) {
-    await this.removeAllSessions(userId);
+  async logoutFromAll(token: string) {
+    const decoded = await this.decodeRefresh(token);
+    if (!decoded || !decoded.id) throw new BadRequestException();
+
+    const { id } = await this.userService.findById(decoded.id);
+
+    await this.removeAllSessions(id);
   }
 }

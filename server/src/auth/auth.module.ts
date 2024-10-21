@@ -5,10 +5,11 @@ import { PrismaService } from '../prisma-service/prisma-service.service.js';
 import { UserModule } from '../user/user.module.js';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
+import { MailService } from '../mail/mail.service.js';
 
 @Module({
   imports: [ConfigModule, UserModule, JwtModule.register({})],
   controllers: [AuthController],
-  providers: [PrismaService, AuthService],
+  providers: [PrismaService, MailService, AuthService],
 })
 export class AuthModule {}
