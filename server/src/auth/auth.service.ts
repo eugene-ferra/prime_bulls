@@ -79,24 +79,8 @@ export class AuthService {
     await this.prisma.token.deleteMany({ where: { userId } });
   }
 
-  async decodeRefresh(token: string) {
-    await this.jwtService.verifyAsync(token, {
-      secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
-    });
-
-    return this.jwtService.decode(token);
-  }
-
-  async decodeAccess(token: string) {
-    await this.jwtService.verifyAsync(token, {
-      secret: this.configService.getOrThrow('JWT_ACCESS_SECRET'),
-    });
-
-    return this.jwtService.decode(token);
-  }
-
   async refresh(token: string, device: DeviceDto): Promise<TokensDto> {
-    const decoded = await this.decodeRefresh(token);
+    const decoded = await this.jwtService.decode(token);
 
     if (!decoded || !decoded.id) throw new BadRequestException();
 
@@ -108,7 +92,7 @@ export class AuthService {
   }
 
   async logout(token: string, device: DeviceDto) {
-    const decoded = await this.decodeRefresh(token);
+    const decoded = await this.jwtService.decode(token);
     if (!decoded || !decoded.id) throw new BadRequestException();
 
     const { id } = await this.userService.findById(decoded.id);
@@ -117,7 +101,7 @@ export class AuthService {
   }
 
   async logoutFromAll(token: string) {
-    const decoded = await this.decodeRefresh(token);
+    const decoded = await this.jwtService.decode(token);
     if (!decoded || !decoded.id) throw new BadRequestException();
 
     const { id } = await this.userService.findById(decoded.id);

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Ip, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Ip, Param, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterByEmailDto } from './dto/registerByEmail.dto.js';
 import { DeviceDto } from './dto/device.dto.js';
@@ -15,6 +15,8 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { RefreshGuard } from '../guards/refresh.guard.js';
+import { AccessGuard } from '../guards/access.guard.js';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -92,6 +94,7 @@ export class AuthController {
   @ApiOkResponse({
     description: 'refreshes access token and returns new access and refresh tokens via cookies',
   })
+  @UseGuards(RefreshGuard)
   @Post('refresh')
   async refresh(
     @Cookies('refreshToken') refresh: string,
@@ -123,18 +126,19 @@ export class AuthController {
   @ApiOkResponse({
     description: 'logs user out from one device',
   })
+  @UseGuards(AccessGuard)
   @Get('logout/:ip/:userAgent')
   async logoutOneDevice(
-    @Cookies('refreshToken') refresh: string | undefined,
+    @Cookies('accessToken') access: string | undefined,
     @Param() device: DeviceDto,
     @Res() res: Response,
   ) {
-    if (!refresh) {
+    if (!access) {
       res.status(401).json({ status: 'error', message: 'No refresh token provided' });
       return;
     }
 
-    await this.authService.logout(refresh, device);
+    await this.authService.logout(access, device);
 
     res.clearCookie('refreshToken');
     res.clearCookie('accessToken');
@@ -147,9 +151,10 @@ export class AuthController {
   @ApiOkResponse({
     description: 'logs user out from all devices',
   })
+  @UseGuards(AccessGuard)
   @Get('logout')
-  async logout(@Cookies('refreshToken') refresh: string, @Res() res: Response) {
-    await this.authService.logoutFromAll(refresh);
+  async logout(@Cookies('accessToken') access: string, @Res() res: Response) {
+    await this.authService.logoutFromAll(access);
 
     res.clearCookie('refreshToken');
     res.clearCookie('accessToken');
