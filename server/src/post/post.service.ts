@@ -14,7 +14,7 @@ export class PostService {
     const include = this.getDefaultInclude();
 
     const [posts, totalDocs] = await Promise.all([
-      this.prisma.post.findMany({ where, include, orderBy: { createdAt: 'desc' }, skip, take }),
+      this.prisma.post.findMany({ where, include, orderBy, skip, take }),
       this.countDocs(where),
     ]);
 

@@ -29,10 +29,9 @@ export class AuthService {
   async loginByEmail(data: LoginByEmailDto, device: DeviceDto): Promise<TokensDto> {
     const { email, password } = data;
     const user = await this.userService.findByEmail(email);
+    const isPasswordCorrect = await this.userService.isCorrectPassword(password, user.password);
 
-    if (!user) throw new BadRequestException('User not found');
-    if (!(await this.userService.isCorrectPassword(password, user.password)))
-      throw new BadRequestException('Incorrect email or password');
+    if (!user || !isPasswordCorrect) throw new BadRequestException('Неправильний email або пароль!');
 
     const { accessToken, refreshToken } = await this.generateTokens({ id: user.id, role: user.role });
     await this.saveSession(user.id, refreshToken, device);
@@ -71,7 +70,7 @@ export class AuthService {
       where: { userId: userId, ip: device.ip, userAgent: device.userAgent },
     });
 
-    if (!session) throw new BadRequestException('invalid session');
+    if (!session) throw new BadRequestException('Сесію не знайдено!');
 
     await this.prisma.token.delete({ where: { id: session.id } });
   }
@@ -80,33 +79,19 @@ export class AuthService {
     await this.prisma.token.deleteMany({ where: { userId } });
   }
 
-  async refresh(token: string, device: DeviceDto): Promise<TokensDto> {
-    const decoded = await this.jwtService.decode(token);
-
-    if (!decoded || !decoded.id) throw new BadRequestException();
-
-    const { id, role } = await this.userService.findById(decoded.id);
+  async refresh(userId: number, device: DeviceDto): Promise<TokensDto> {
+    const { id, role } = await this.userService.findById(userId);
     const tokens = await this.generateTokens({ id, role });
     await this.saveSession(id, tokens.refreshToken, device);
 
     return tokens;
   }
 
-  async logout(token: string, device: DeviceDto) {
-    const decoded = await this.jwtService.decode(token);
-    if (!decoded || !decoded.id) throw new BadRequestException();
-
-    const { id } = await this.userService.findById(decoded.id);
-
-    await this.removeSession(id, device);
+  async logout(userId: number, device: DeviceDto) {
+    await this.removeSession(userId, device);
   }
 
-  async logoutFromAll(token: string) {
-    const decoded = await this.jwtService.decode(token);
-    if (!decoded || !decoded.id) throw new BadRequestException();
-
-    const { id } = await this.userService.findById(decoded.id);
-
-    await this.removeAllSessions(id);
+  async logoutFromAll(userId: number) {
+    await this.removeAllSessions(userId);
   }
 }

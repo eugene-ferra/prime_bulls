@@ -28,7 +28,7 @@ export class PostController {
   async findAll(@Query() query: FilterPostsDto) {
     const data = await this.postService.findAll(query);
 
-    if (!data.data.length) throw new NotFoundException();
+    if (!data.data.length) throw new NotFoundException('Статей за вказаними параметрами не знайдено!');
 
     return {
       docs: data.data.map((item) => {
@@ -50,7 +50,7 @@ export class PostController {
     const post = await this.postService.findBySlug(slug);
 
     if (!post) {
-      throw new NotFoundException();
+      throw new NotFoundException('Статтю не знайдено!');
     }
 
     return new SimplePostEntity(post);

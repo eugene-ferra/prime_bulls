@@ -1,11 +1,10 @@
-import { Body, Controller, Get, Headers, Ip, Param, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Ip, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterByEmailDto } from './dto/registerByEmail.dto.js';
 import { DeviceDto } from './dto/device.dto.js';
 import { Response } from 'express';
 import { MailService } from '../mail/mail.service.js';
 import { LoginByEmailDto } from './dto/loginByEmail.dto.js';
-import { Cookies } from '../decorators/cookie.decorator.js';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -97,14 +96,14 @@ export class AuthController {
   @UseGuards(RefreshGuard)
   @Post('refresh')
   async refresh(
-    @Cookies('refreshToken') refresh: string,
+    @Req() req,
     @Headers('user-agent') userAgent: string,
     @Ip() ip: string,
     @Res() res: Response,
   ) {
     const device: DeviceDto = { userAgent, ip };
 
-    const tokens = await this.authService.refresh(refresh, device);
+    const tokens = await this.authService.refresh(req.user.id, device);
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
@@ -128,20 +127,13 @@ export class AuthController {
   })
   @UseGuards(AccessGuard)
   @Get('logout/:ip/:userAgent')
-  async logoutOneDevice(
-    @Cookies('accessToken') access: string | undefined,
-    @Param() device: DeviceDto,
-    @Res() res: Response,
-  ) {
-    if (!access) {
-      res.status(401).json({ status: 'error', message: 'No refresh token provided' });
-      return;
+  async logoutOneDevice(@Req() req, @Param() device: DeviceDto, @Res() res: Response) {
+    await this.authService.logout(req.user.id, device);
+
+    if (device.ip === req.ip && device.userAgent === req.headers['user-agent']) {
+      res.clearCookie('refreshToken');
+      res.clearCookie('accessToken');
     }
-
-    await this.authService.logout(access, device);
-
-    res.clearCookie('refreshToken');
-    res.clearCookie('accessToken');
 
     res.status(200).json({ status: 'success' });
   }
@@ -153,8 +145,8 @@ export class AuthController {
   })
   @UseGuards(AccessGuard)
   @Get('logout')
-  async logout(@Cookies('accessToken') access: string, @Res() res: Response) {
-    await this.authService.logoutFromAll(access);
+  async logout(@Req() req, @Res() res: Response) {
+    await this.authService.logoutFromAll(req.user.id);
 
     res.clearCookie('refreshToken');
     res.clearCookie('accessToken');

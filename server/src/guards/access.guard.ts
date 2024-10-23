@@ -14,7 +14,7 @@ export class AccessGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = this.extractAccessToken(request);
     if (!token) {
-      throw new UnauthorizedException('No token provided');
+      throw new UnauthorizedException('No access token provided!');
     }
     try {
       const payload = await this.jwtService.verifyAsync(token, {
@@ -23,7 +23,7 @@ export class AccessGuard implements CanActivate {
 
       request.user = payload;
     } catch {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException('Invalid access token!');
     }
     return true;
   }

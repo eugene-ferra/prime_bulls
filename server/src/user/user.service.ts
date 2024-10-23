@@ -11,7 +11,7 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto) {
     const isExist = await this.findByEmail(createUserDto.email);
-    if (isExist) throw new ConflictException('User with this email already exists');
+    if (isExist) throw new ConflictException('Користувач з такою поштою вже існує!');
 
     const hashedPassword = await this.hashPassword(createUserDto.password);
 
@@ -40,10 +40,10 @@ export class UserService {
     const { newPassword, oldPassword, newPasswordConfirm } = info;
     const user = await this.findById(id);
 
-    if (!user) throw new NotFoundException('User not found');
-    if (newPassword !== newPasswordConfirm) throw new BadRequestException('Passwords do not match');
+    if (!user) throw new NotFoundException('Користувача не знайдено!');
+    if (newPassword !== newPasswordConfirm) throw new BadRequestException('Паролі не співпадають!');
     if (!(await this.isCorrectPassword(oldPassword, user.password)))
-      throw new BadRequestException('Incorrect password');
+      throw new BadRequestException('Старий пароль вказано невірно!');
 
     const newHashedPassword = await this.hashPassword(newPassword);
     return await this.prisma.user.update({ where: { id }, data: { password: newHashedPassword } });

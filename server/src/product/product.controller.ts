@@ -29,7 +29,7 @@ export class ProductController {
   async findAll(@Query() query: FilterProductsDto) {
     const data = await this.productService.findAll(query);
 
-    if (!data.data.length) throw new NotFoundException();
+    if (!data.data.length) throw new NotFoundException('Товарів за вказаними параметрами не знайдено!');
 
     return {
       docs: data.data.map((item) => {
@@ -49,7 +49,7 @@ export class ProductController {
     const product = await this.productService.findBySlug(slug);
 
     if (!product) {
-      throw new NotFoundException();
+      throw new NotFoundException('Товар не знайдено!');
     }
 
     return new ExpandedProductEntity(product);

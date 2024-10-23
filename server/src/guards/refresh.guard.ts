@@ -13,15 +13,18 @@ export class RefreshGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractRefreshToken(request);
+    console.log('token', token);
     if (!token) {
-      throw new UnauthorizedException('No token provided');
+      throw new UnauthorizedException('No refresh token provided!');
     }
     try {
-      await this.jwtService.verifyAsync(token, {
-        secret: this.configService.getOrThrow('JWT_REFRESG_SECRET'),
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
       });
+
+      request.user = payload;
     } catch {
-      throw new UnauthorizedException('Invalid token');
+      throw new UnauthorizedException('Invalid refresh token!');
     }
     return true;
   }
