@@ -11,7 +11,7 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto) {
     const isExist = await this.findByEmail(createUserDto.email);
-    if (isExist) throw new ConflictException();
+    if (isExist) throw new ConflictException('User with this email already exists');
 
     const hashedPassword = await this.hashPassword(createUserDto.password);
 
@@ -40,9 +40,10 @@ export class UserService {
     const { newPassword, oldPassword, newPasswordConfirm } = info;
     const user = await this.findById(id);
 
-    if (!user) throw new NotFoundException();
-    if (newPassword !== newPasswordConfirm) throw new BadRequestException();
-    if (!(await this.isCorrectPassword(oldPassword, user.password))) throw new BadRequestException();
+    if (!user) throw new NotFoundException('User not found');
+    if (newPassword !== newPasswordConfirm) throw new BadRequestException('Passwords do not match');
+    if (!(await this.isCorrectPassword(oldPassword, user.password)))
+      throw new BadRequestException('Incorrect password');
 
     const newHashedPassword = await this.hashPassword(newPassword);
     return await this.prisma.user.update({ where: { id }, data: { password: newHashedPassword } });
@@ -54,10 +55,8 @@ export class UserService {
     return await bcrypt.hash(password, salt);
   }
 
-  async isCorrectPassword(testPassword: string, hashedPassword: string) {
-    const testHash = await this.hashPassword(testPassword);
-
-    return bcrypt.compare(testHash, hashedPassword);
+  async isCorrectPassword(testPassword: string, hashedPassword: string): Promise<boolean> {
+    return await bcrypt.compare(testPassword, hashedPassword);
   }
 
   async delete(id: number) {

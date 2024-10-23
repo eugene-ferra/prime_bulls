@@ -3,7 +3,7 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { UserImageEntity } from './userImageEntity.js';
 
 @Exclude()
-export class User {
+export class UserEntity {
   @Expose()
   @ApiProperty()
   id: number;
@@ -31,7 +31,7 @@ export class User {
 
   @Expose()
   @ApiProperty()
-  isVerified: false;
+  isVerified: boolean;
 
   @Expose()
   @ApiProperty()
@@ -40,4 +40,8 @@ export class User {
   @Expose()
   @ApiProperty()
   role: string;
+
+  constructor(partial: Partial<UserEntity>) {
+    Object.assign(this, partial);
+  }
 }

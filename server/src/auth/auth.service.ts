@@ -30,8 +30,9 @@ export class AuthService {
     const { email, password } = data;
     const user = await this.userService.findByEmail(email);
 
-    if (!user) throw new BadRequestException();
-    if (!this.userService.isCorrectPassword(password, user.password)) throw new BadRequestException();
+    if (!user) throw new BadRequestException('User not found');
+    if (!(await this.userService.isCorrectPassword(password, user.password)))
+      throw new BadRequestException('Incorrect email or password');
 
     const { accessToken, refreshToken } = await this.generateTokens({ id: user.id, role: user.role });
     await this.saveSession(user.id, refreshToken, device);
