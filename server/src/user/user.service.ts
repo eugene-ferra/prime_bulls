@@ -4,10 +4,14 @@ import { PrismaService } from '../prisma-service/prisma-service.service.js';
 import { UpdateUserInfoDto } from './dto/updateUserInfo.dto.js';
 import { UpdateUserPasswordDto } from './dto/updateUserPassword.js';
 import * as bcrypt from 'bcrypt';
+import { MinioClientService } from '../minio/minio.service.js';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private minioService: MinioClientService,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     const isExist = await this.findByEmail(createUserDto.email);
@@ -61,5 +65,34 @@ export class UserService {
 
   async delete(id: number) {
     return await this.prisma.user.delete({ where: { id } });
+  }
+
+  async updateAvatar(id: number, file: Express.Multer.File) {
+    const user = await this.findById(id);
+
+    if (!user) throw new NotFoundException('Користувача не знайдено!');
+
+    if (user.imageUrl) await this.minioService.deleteImage('users', user.imageUrl);
+
+    const imageUrl = await this.minioService.saveImage(file, 'users', file.originalname);
+    const altText = `${user.name}-${user.lastName}`;
+
+    return await this.prisma.user.update({
+      where: { id },
+      data: { imageUrl, mimeType: file.mimetype, altText },
+    });
+  }
+
+  async deleteAvatar(id: number) {
+    const user = await this.findById(id);
+
+    if (!user) throw new NotFoundException('Користувача не знайдено!');
+
+    if (user.imageUrl) await this.minioService.deleteImage('users', user.imageUrl);
+
+    return await this.prisma.user.update({
+      where: { id },
+      data: { imageUrl: null, mimeType: null, altText: null },
+    });
   }
 }

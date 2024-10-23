@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { PrismaService } from './prisma-service/prisma-service.service.js';
 import { AdminModuleModule } from './admin-module/admin-module.module.js';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProductModule } from './product/product.module.js';
 import { PostModule } from './post/post.module.js';
 import { UserModule } from './user/user.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { MailModule } from './mail/mail.module.js';
+import { MinioClientModule } from './minio/minio.module.js';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MailModule } from './mail/mail.module.js';
     UserModule,
     AuthModule,
     MailModule,
+    MinioClientModule,
   ],
   controllers: [],
   providers: [PrismaService],

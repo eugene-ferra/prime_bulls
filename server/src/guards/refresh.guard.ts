@@ -13,7 +13,7 @@ export class RefreshGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractRefreshToken(request);
-    console.log('token', token);
+
     if (!token) {
       throw new UnauthorizedException('No refresh token provided!');
     }
