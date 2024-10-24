@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MinioService } from 'nestjs-minio-client';
 import { ConfigService } from '@nestjs/config';
+import sharp from 'sharp';
 
 @Injectable()
 export class MinioClientService {
@@ -9,14 +10,30 @@ export class MinioClientService {
     private readonly config: ConfigService,
   ) {}
 
-  async saveImage(image: Express.Multer.File, bucketName: string, fileName: string): Promise<string> {
+  async saveImage(
+    image: Express.Multer.File,
+    bucketName: string,
+    id: number,
+    fileName: string,
+    options?: {
+      width?: number | null;
+      height?: number | null;
+      fit?: 'cover' | 'contain' | 'fill' | 'inside' | 'outside';
+    },
+  ): Promise<{ url: string; mime: string }> {
     const exist = await this.minioService.client.bucketExists(bucketName);
 
     if (!exist) await this.minioService.client.makeBucket(bucketName);
 
-    await this.minioService.client.putObject(bucketName, fileName, image.buffer);
+    const sharpInstance = sharp(image.buffer);
+    const processedImage = await sharpInstance
+      .resize(options.width, options.height, { fit: options.fit || 'cover' })
+      .toBuffer();
+    const processedName = `${id}/${fileName}.${image.mimetype.split('/')[1]}`;
 
-    return fileName;
+    await this.minioService.client.putObject(bucketName, processedName, processedImage);
+
+    return { url: processedName, mime: image.mimetype };
   }
 
   async deleteImage(bucketName: string, fileName: string): Promise<void> {

@@ -5,6 +5,7 @@ import { UpdateUserInfoDto } from './dto/updateUserInfo.dto.js';
 import { UpdateUserPasswordDto } from './dto/updateUserPassword.js';
 import * as bcrypt from 'bcrypt';
 import { MinioClientService } from '../minio/minio.service.js';
+import slugify from 'slugify';
 
 @Injectable()
 export class UserService {
@@ -12,6 +13,8 @@ export class UserService {
     private prisma: PrismaService,
     private minioService: MinioClientService,
   ) {}
+
+  private folder = 'users';
 
   async create(createUserDto: CreateUserDto) {
     const isExist = await this.findByEmail(createUserDto.email);
@@ -72,14 +75,20 @@ export class UserService {
 
     if (!user) throw new NotFoundException('Користувача не знайдено!');
 
-    if (user.imageUrl) await this.minioService.deleteImage('users', user.imageUrl);
+    if (user.imageUrl) {
+      await this.minioService.deleteImage(this.folder, user.imageUrl);
+    }
 
-    const imageUrl = await this.minioService.saveImage(file, 'users', file.originalname);
-    const altText = `${user.name}-${user.lastName}`;
+    const savedImageName = slugify.default(`${user.id}-${user.name}-${Date.now()}`, { lower: true });
+    const savedImage = await this.minioService.saveImage(file, this.folder, user.id, savedImageName, {
+      width: 400,
+      height: 400,
+      fit: 'cover',
+    });
 
     return await this.prisma.user.update({
       where: { id },
-      data: { imageUrl, mimeType: file.mimetype, altText },
+      data: { imageUrl: savedImage.url, mimeType: savedImage.mime, altText: savedImageName },
     });
   }
 
@@ -88,7 +97,9 @@ export class UserService {
 
     if (!user) throw new NotFoundException('Користувача не знайдено!');
 
-    if (user.imageUrl) await this.minioService.deleteImage('users', user.imageUrl);
+    if (user.imageUrl) {
+      await this.minioService.deleteImage(this.folder, user.imageUrl);
+    }
 
     return await this.prisma.user.update({
       where: { id },
