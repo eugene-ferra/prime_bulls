@@ -8,7 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MailService } from '../mail/mail.service.js';
 
 @Module({
-  imports: [ConfigModule, UserModule, JwtModule.register({})],
+  imports: [ConfigModule, UserModule, JwtModule.register({ global: true })],
   controllers: [AuthController],
   providers: [PrismaService, MailService, AuthService],
 })

@@ -8,6 +8,7 @@ import { UserModule } from './user/user.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { MinioClientModule } from './minio/minio.module.js';
+import { CommentModule } from './comment/comment.module.js';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { MinioClientModule } from './minio/minio.module.js';
     AuthModule,
     MailModule,
     MinioClientModule,
+    CommentModule,
   ],
   controllers: [],
   providers: [PrismaService],
