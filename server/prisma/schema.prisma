@@ -99,12 +99,11 @@ model Review {
 
   parentReview Review? @relation("ReviewParentReview", fields: [parentReviewId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  review Review[] @relation("ReviewParentReview")
+  reviews Review[] @relation("ReviewParentReview")
   images ReviewImage[] 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   likes ReviewLike[] 
 
-  @@unique([productId, userId])
 }
 
 model Post {
