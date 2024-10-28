@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import CurrentUserDto from '../dto/currentUser.dto.js';
 
 @Injectable()
 export class RefreshGuard implements CanActivate {
@@ -18,7 +19,7 @@ export class RefreshGuard implements CanActivate {
       throw new UnauthorizedException('No refresh token provided!');
     }
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
+      const payload: CurrentUserDto = await this.jwtService.verifyAsync(token, {
         secret: this.configService.getOrThrow('JWT_REFRESH_SECRET'),
       });
 

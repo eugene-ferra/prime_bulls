@@ -2,7 +2,7 @@ import { Body, Controller, Get, Headers, Ip, Param, Post, Req, Res, UseGuards } 
 import { AuthService } from './auth.service.js';
 import { RegisterByEmailDto } from './dto/registerByEmail.dto.js';
 import { DeviceDto } from './dto/device.dto.js';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { MailService } from '../mail/mail.service.js';
 import { LoginByEmailDto } from './dto/loginByEmail.dto.js';
 import {
@@ -16,6 +16,8 @@ import {
 } from '@nestjs/swagger';
 import { RefreshGuard } from '../common/guards/refresh.guard.js';
 import { AccessGuard } from '../common/guards/access.guard.js';
+import { setAuthCookies } from './helpers/setAuthCookies.js';
+import { clearAuthCookies } from './helpers/clearAuthCookies.js';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -43,17 +45,7 @@ export class AuthController {
 
     await this.mailService.sendUserConfirmation(body.name, body.email);
 
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: false,
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-    });
-
-    res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: false,
-      expires: new Date(Date.now() + 1000 * 60 * 15),
-    });
+    setAuthCookies(res, tokens);
 
     res.status(201).json({ status: 'success' });
   }
@@ -73,17 +65,7 @@ export class AuthController {
     const device: DeviceDto = { userAgent, ip };
     const tokens = await this.authService.loginByEmail(body, device);
 
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: false,
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-    });
-
-    res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: false,
-      expires: new Date(Date.now() + 1000 * 60 * 15),
-    });
+    setAuthCookies(res, tokens);
 
     res.status(201).json({ status: 'success' });
   }
@@ -96,7 +78,7 @@ export class AuthController {
   @UseGuards(RefreshGuard)
   @Post('refresh')
   async refresh(
-    @Req() req,
+    @Req() req: Request,
     @Headers('user-agent') userAgent: string,
     @Ip() ip: string,
     @Res() res: Response,
@@ -105,17 +87,7 @@ export class AuthController {
 
     const tokens = await this.authService.refresh(req.user.id, device);
 
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: false,
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
-    });
-
-    res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: false,
-      expires: new Date(Date.now() + 1000 * 60 * 15),
-    });
+    setAuthCookies(res, tokens);
 
     res.status(200).json({ status: 'success' });
   }
@@ -127,12 +99,11 @@ export class AuthController {
   })
   @UseGuards(AccessGuard)
   @Get('logout/:ip/:userAgent')
-  async logoutOneDevice(@Req() req, @Param() device: DeviceDto, @Res() res: Response) {
+  async logoutOneDevice(@Req() req: Request, @Param() device: DeviceDto, @Res() res: Response) {
     await this.authService.logout(req.user.id, device);
 
     if (device.ip === req.ip && device.userAgent === req.headers['user-agent']) {
-      res.clearCookie('refreshToken');
-      res.clearCookie('accessToken');
+      clearAuthCookies(res);
     }
 
     res.status(200).json({ status: 'success' });
@@ -145,12 +116,10 @@ export class AuthController {
   })
   @UseGuards(AccessGuard)
   @Get('logout')
-  async logout(@Req() req, @Res() res: Response) {
+  async logout(@Req() req: Request, @Res() res: Response) {
     await this.authService.logoutFromAll(req.user.id);
 
-    res.clearCookie('refreshToken');
-    res.clearCookie('accessToken');
-
+    clearAuthCookies(res);
     res.status(200).json({ status: 'success' });
   }
 }

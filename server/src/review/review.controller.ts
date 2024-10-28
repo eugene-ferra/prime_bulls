@@ -16,6 +16,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  BadRequestException,
 } from '@nestjs/common';
 import { ReviewService } from './review.service.js';
 import { CreateReviewDto } from './dto/createReview.dto.js';
@@ -35,6 +36,7 @@ import { ReviewEntity } from './entities/review.entity.js';
 import { FilterReviewDto } from './dto/filterReview.dto.js';
 import { AccessGuard } from '../common/guards/access.guard.js';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { Request } from 'express';
 
 @ApiTags('reviews')
 @Controller('reviews')
@@ -45,7 +47,7 @@ export class ReviewController {
   @ApiNotFoundResponse()
   @ApiOkResponse({ type: [ReviewEntity] })
   @UseInterceptors(ClassSerializerInterceptor)
-  @Get()
+  @Get('/')
   async findAll(@Query() query: FilterReviewDto) {
     const data = await this.reviewService.findAll(query);
 
@@ -78,9 +80,9 @@ export class ReviewController {
   })
   @UseGuards(AccessGuard)
   @UseInterceptors(FilesInterceptor('files', 5))
-  @Post()
+  @Post('/')
   async createComment(
-    @Req() req,
+    @Req() req: Request,
     @Body() body: CreateReviewDto,
     @UploadedFiles(
       new ParseFilePipe({
@@ -101,12 +103,13 @@ export class ReviewController {
   @ApiUnauthorizedResponse()
   @ApiNotFoundResponse()
   @ApiForbiddenResponse()
+  @ApiBadRequestResponse()
   @ApiOkResponse()
   @UseInterceptors(FilesInterceptor('files', 5))
   @UseGuards(AccessGuard)
   @Patch(':id')
   async updateComment(
-    @Req() req,
+    @Req() req: Request,
     @Body() body: UpdateReviewDto,
     @Param('id') id: number,
     @UploadedFiles(
@@ -120,6 +123,8 @@ export class ReviewController {
     )
     files: Express.Multer.File[],
   ) {
+    if (!id) throw new BadRequestException('Такого коментаря не існує!');
+
     await this.reviewService.update(id, req.user.id, body, files);
     return;
   }
@@ -127,10 +132,13 @@ export class ReviewController {
   @ApiUnauthorizedResponse()
   @ApiNotFoundResponse()
   @ApiForbiddenResponse()
+  @ApiBadRequestResponse()
   @ApiOkResponse()
   @UseGuards(AccessGuard)
   @Delete(':id')
-  async deleteComment(@Req() req, @Param('id') id: number) {
+  async deleteComment(@Req() req: Request, @Param('id') id: number) {
+    if (!id) throw new BadRequestException('Такого коментаря не існує!');
+
     return await this.reviewService.delete(id, req.user.id);
   }
 }

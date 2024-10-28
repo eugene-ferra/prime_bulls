@@ -23,11 +23,11 @@ import {
   ApiBody,
   ApiConsumes,
   ApiOkResponse,
-  ApiProperty,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Request } from 'express';
 
 @ApiTags('users')
 @Controller('users')
@@ -39,7 +39,7 @@ export class UserController {
   @UseGuards(AccessGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Get('/me')
-  async getMe(@Req() req): Promise<UserEntity> {
+  async getMe(@Req() req: Request): Promise<UserEntity> {
     const user = await this.userService.findById(req.user.id);
 
     return new UserEntity(user);
@@ -51,7 +51,7 @@ export class UserController {
   @UseGuards(AccessGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Patch('/me/password')
-  async changePassword(@Req() req, @Body() body: UpdateUserPasswordDto): Promise<UserEntity> {
+  async changePassword(@Req() req: Request, @Body() body: UpdateUserPasswordDto): Promise<UserEntity> {
     const user = await this.userService.updatePassword(req.user.id, body);
 
     return new UserEntity(user);
@@ -63,7 +63,7 @@ export class UserController {
   @UseGuards(AccessGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Patch('/me/info')
-  async changeInfo(@Req() req, @Body() body: UpdateUserInfoDto): Promise<UserEntity> {
+  async changeInfo(@Req() req: Request, @Body() body: UpdateUserInfoDto): Promise<UserEntity> {
     const user = await this.userService.updateInfo(req.user.id, body);
 
     return new UserEntity(user);
@@ -97,7 +97,7 @@ export class UserController {
       }),
     )
     file: Express.Multer.File,
-    @Req() req,
+    @Req() req: Request,
   ): Promise<UserEntity> {
     const user = await this.userService.updateAvatar(req.user.id, file);
 
@@ -121,7 +121,7 @@ export class UserController {
   @UseGuards(AccessGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Delete('/me/avatar')
-  async deleteAvatar(@Req() req): Promise<UserEntity> {
+  async deleteAvatar(@Req() req: Request): Promise<UserEntity> {
     const user = await this.userService.deleteAvatar(req.user.id);
 
     return new UserEntity(user);
@@ -132,7 +132,7 @@ export class UserController {
   @UseGuards(AccessGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   @Delete('/me')
-  async deleteMe(@Req() req): Promise<UserEntity> {
+  async deleteMe(@Req() req: Request): Promise<UserEntity> {
     await this.userService.delete(req.user.id);
 
     return;

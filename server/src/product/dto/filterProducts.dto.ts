@@ -25,17 +25,13 @@ export class FilterProductsDto extends BaseFilterDto {
   @IsString()
   slug?: string;
 
-  @ApiProperty({ required: false, type: [Number, Number] })
+  @ApiPropertyOptional()
   @IsOptional()
-  @Type(() => JSON.parse)
-  @IsArray()
-  basePrice?: [number, number];
+  minPrice?: number;
 
-  @ApiProperty({ required: false, type: [Number, Number] })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsArray()
-  @Type(() => Number)
-  salePercent?: [number, number];
+  maxPrice?: number;
 
   @ApiPropertyOptional()
   @IsOptional()

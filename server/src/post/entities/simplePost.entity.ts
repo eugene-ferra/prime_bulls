@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { PostTopicEntity, TopicEntity } from './topic.entity.js';
 import { ImageEntity } from '../../common/entities/image.entity.js';
+import { PostTopicEntity, TopicEntity } from './topic.entity.js';
 
 @Exclude()
 export class SimplePostEntity {
@@ -24,12 +24,12 @@ export class SimplePostEntity {
   @ApiProperty({ type: () => ImageEntity })
   @Expose()
   @Transform(({ obj }) => new ImageEntity({ url: obj.coverImageUrl, altText: obj.coverImageAltText }))
-  coverImage: ImageEntity;
+  coverImage?: ImageEntity;
 
   @ApiProperty({ type: () => [TopicEntity] })
   @Expose()
   @Transform(({ value }) => value.map((item) => new TopicEntity(item.topic)))
-  topics: PostTopicEntity[];
+  topics?: PostTopicEntity[];
 
   // TODO: add views and likes data
 
@@ -37,7 +37,7 @@ export class SimplePostEntity {
   @Expose()
   createdAt: Date;
 
-  constructor(partial: Partial<SimplePostEntity>) {
+  constructor(partial: SimplePostEntity) {
     Object.assign(this, partial);
   }
 }

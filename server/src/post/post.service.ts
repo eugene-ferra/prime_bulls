@@ -7,11 +7,13 @@ import { FilterPostsDto } from './dto/filterPosts.dto.js';
 export class PostService {
   constructor(private prisma: PrismaService) {}
 
+  private _defaultInclude: Prisma.PostInclude = { topics: { include: { topic: true } } };
+
   async findAll(payload: FilterPostsDto) {
     const where = this.getWhereClause(payload);
     const orderBy = this.getOrderByClause(payload);
     const { skip, take } = this.getPagination(payload);
-    const include = this.getDefaultInclude();
+    const include = this._defaultInclude;
 
     const [posts, totalDocs] = await Promise.all([
       this.prisma.post.findMany({ where, include, orderBy, skip, take }),
@@ -20,17 +22,22 @@ export class PostService {
 
     return {
       data: posts,
-      currentPage: payload.page,
+      currentPage: payload.page || 1,
       lastPage: Math.ceil(totalDocs / take),
     };
   }
 
-  async findById(id: number, include?: Prisma.PostInclude) {
-    return await this.prisma.post.findUnique({ where: { id }, include: this.getDefaultInclude() });
+  async findById(
+    id: number,
+  ): Promise<Prisma.PostGetPayload<{ include: { topics: { include: { topic: true } } } }> | null> {
+    return await this.prisma.post.findUnique({
+      where: { id },
+      include: { topics: { include: { topic: true } } },
+    });
   }
 
   async findBySlug(slug: string) {
-    return await this.prisma.post.findFirst({ where: { slug }, include: this.getDefaultInclude() });
+    return await this.prisma.post.findFirst({ where: { slug }, include: this._defaultInclude });
   }
 
   private async countDocs(input: Prisma.PostWhereInput) {
@@ -57,11 +64,5 @@ export class PostService {
 
     const skip = (page - 1) * limit;
     return { skip, take: limit };
-  }
-
-  private getDefaultInclude(): Prisma.PostInclude {
-    return {
-      topics: { include: { topic: true } },
-    };
   }
 }

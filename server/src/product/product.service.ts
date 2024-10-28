@@ -20,7 +20,7 @@ export class ProductService {
 
     return {
       data: products,
-      currentPage: payload.page,
+      currentPage: payload.page || 1,
       lastPage: Math.ceil(totalDocs / take),
     };
   }
@@ -47,8 +47,8 @@ export class ProductService {
     if (payload.subtitle) where.subtitle = { contains: payload.subtitle, mode: 'insensitive' };
     if (payload.slug) where.slug = { contains: payload.slug, mode: 'insensitive' };
     if (payload.categoryId) where.categoryId = payload.categoryId;
-    if (payload.basePrice) where.basePrice = { gte: payload.basePrice[0], lte: payload.basePrice[1] };
-    if (payload.salePercent) where.salePercent = { gte: payload.salePercent[0], lte: payload.salePercent[1] };
+    if (payload.minPrice) where.basePrice = { gte: payload.minPrice };
+    if (payload.maxPrice) where.basePrice = { lte: payload.maxPrice };
     if (payload.isActive !== undefined) where.isActive = payload.isActive;
 
     return where;

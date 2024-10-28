@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
+import CurrentUserDto from '../dto/currentUser.dto.js';
 
 @Injectable()
 export class AccessGuard implements CanActivate {
@@ -17,7 +18,7 @@ export class AccessGuard implements CanActivate {
       throw new UnauthorizedException('No access token provided!');
     }
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
+      const payload: CurrentUserDto = await this.jwtService.verifyAsync(token, {
         secret: this.configService.getOrThrow('JWT_ACCESS_SECRET'),
       });
 

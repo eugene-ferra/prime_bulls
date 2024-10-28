@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -28,6 +29,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Request } from 'express';
 
 @ApiTags('comments')
 @Controller('comments')
@@ -59,7 +61,7 @@ export class CommentController {
   @ApiCreatedResponse()
   @UseGuards(AccessGuard)
   @Post()
-  async createComment(@Req() req, @Body() body: CreateCommentDto): Promise<CommentEntity> {
+  async createComment(@Req() req: Request, @Body() body: CreateCommentDto): Promise<CommentEntity> {
     await this.commentService.create(req.user.id, body);
     return;
   }
@@ -68,10 +70,13 @@ export class CommentController {
   @ApiUnauthorizedResponse()
   @ApiNotFoundResponse()
   @ApiForbiddenResponse()
+  @ApiBadRequestResponse()
   @ApiOkResponse()
   @UseGuards(AccessGuard)
   @Patch(':id')
-  async updateComment(@Req() req, @Body() body: UpdateCommentDto, @Param('id') id: number) {
+  async updateComment(@Req() req: Request, @Body() body: UpdateCommentDto, @Param('id') id: number) {
+    if (!id) throw new BadRequestException('Такого коментаря не існує!');
+
     await this.commentService.update(id, req.user.id, body);
     return;
   }
@@ -79,10 +84,13 @@ export class CommentController {
   @ApiUnauthorizedResponse()
   @ApiNotFoundResponse()
   @ApiForbiddenResponse()
+  @ApiBadRequestResponse()
   @ApiOkResponse()
   @UseGuards(AccessGuard)
   @Delete(':id')
-  async deleteComment(@Req() req, @Param('id') id: number) {
+  async deleteComment(@Req() req: Request, @Param('id') id: number) {
+    if (!id) throw new BadRequestException('Такого коментаря не існує!');
+
     return await this.commentService.delete(id, req.user.id);
   }
 }

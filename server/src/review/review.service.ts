@@ -134,7 +134,7 @@ export class ReviewService {
 
     return {
       data: reviewsWithReplyCount,
-      currentPage: payload.page,
+      currentPage: payload.page || 1,
       lastPage: Math.ceil(totalDocs / take),
     };
   }

@@ -49,7 +49,7 @@ export class CommentService {
 
     return {
       data: commentsWithReplyCount,
-      currentPage: filters.page,
+      currentPage: filters.page || 1,
       lastPage: Math.ceil(totalDocs / take),
     };
   }

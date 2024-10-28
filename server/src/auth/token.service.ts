@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { TokenPayloadDto } from './dto/tokenPayload.dto.js';
 import { TokensDto } from './dto/tokens.dto.js';
+import CurrentUserDto from '../common/dto/currentUser.dto.js';
 
 @Injectable()
 export class TokenService {
@@ -11,7 +11,7 @@ export class TokenService {
     private readonly configService: ConfigService,
   ) {}
 
-  async generateTokens(payload: TokenPayloadDto): Promise<TokensDto> {
+  async generateTokens(payload: CurrentUserDto): Promise<TokensDto> {
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.configService.getOrThrow('JWT_ACCESS_SECRET'),
       expiresIn: '15m',

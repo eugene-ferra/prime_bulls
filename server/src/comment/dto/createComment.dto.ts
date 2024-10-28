@@ -3,7 +3,7 @@ import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateCommentDto {
   @ApiProperty()
-  @IsNumber()
+  @IsNumber({}, { message: 'Некорректна стаття' })
   postId: number;
 
   @ApiProperty()
@@ -12,6 +12,6 @@ export class CreateCommentDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsNumber()
+  @IsNumber({}, { message: 'Некорректний коментар' })
   parentCommentId?: number;
 }

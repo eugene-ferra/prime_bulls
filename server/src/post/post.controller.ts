@@ -45,6 +45,7 @@ export class PostController {
     description: 'Retrieves posts based on slug',
     type: SimplePostEntity,
   })
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get(':slug')
   async findOne(@Param('slug') slug: string): Promise<SimplePostEntity> {
     const post = await this.postService.findBySlug(slug);
