@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { ProductVariantEntity } from './productVariantEntity.js';
-import { ProductAttributeEntity } from './productAttributeEntity.js';
-import { ProductImageEntity } from './productImageEntity.js';
-import { ProductCategoryEntity } from './productCategoryEntity.js';
+import { ProductVariantEntity } from './productVariant.entity.js';
+import { ProductAttributeEntity } from './productAttribute.entity.js';
+import { ProductCategoryEntity } from './productCategory.entity.js';
+import { ImageEntity } from '../../common/entities/image.entity.js';
 
 @Exclude()
 export class ExpandedProductEntity {
@@ -40,10 +40,10 @@ export class ExpandedProductEntity {
   @Expose()
   salePercent: number;
 
-  @ApiProperty({ type: () => ProductImageEntity })
+  @ApiProperty({ type: () => ImageEntity })
   @Expose()
   @Transform(({ obj }) => ({ url: obj.coverImageUrl, altText: obj.coverImageAltText }))
-  coverImage: ProductImageEntity;
+  coverImage: ImageEntity;
 
   @ApiProperty()
   @Expose()
@@ -53,10 +53,10 @@ export class ExpandedProductEntity {
   @Expose()
   createdAt: Date;
 
-  @ApiProperty({ type: () => [ProductImageEntity] })
+  @ApiProperty({ type: () => [ImageEntity] })
   @Expose()
-  @Transform(({ value }) => value.map((item: ProductImageEntity) => new ProductImageEntity(item)))
-  images: ProductImageEntity[];
+  @Transform(({ value }) => value.map((item: ImageEntity) => new ImageEntity(item)))
+  images: ImageEntity[];
 
   @ApiProperty({ type: () => [ProductVariantEntity] })
   @Expose()

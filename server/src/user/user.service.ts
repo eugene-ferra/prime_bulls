@@ -1,17 +1,17 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/createUser.dto.js';
-import { PrismaService } from '../prisma-service/prisma-service.service.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { UpdateUserInfoDto } from './dto/updateUserInfo.dto.js';
-import { UpdateUserPasswordDto } from './dto/updateUserPassword.js';
+import { UpdateUserPasswordDto } from './dto/updateUserPassword.dto.js';
 import * as bcrypt from 'bcrypt';
-import { MinioClientService } from '../minio/minio.service.js';
+import { ImageService } from '../file/image.service.js';
 import slugify from 'slugify';
 
 @Injectable()
 export class UserService {
   constructor(
     private prisma: PrismaService,
-    private minioService: MinioClientService,
+    private minioService: ImageService,
   ) {}
 
   private folder = 'users';

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { UserImageEntity } from './userImageEntity.js';
+import { ImageEntity } from '../../common/entities/image.entity.js';
 
 @Exclude()
 export class UserEntity {
@@ -26,8 +26,8 @@ export class UserEntity {
 
   @Expose()
   @ApiProperty()
-  @Transform(({ obj }) => new UserImageEntity({ url: obj.imageUrl, altText: obj.altText }))
-  avatar: UserImageEntity;
+  @Transform(({ obj }) => new ImageEntity({ url: obj.imageUrl, altText: obj.altText }))
+  avatar: ImageEntity;
 
   @Expose()
   @ApiProperty()

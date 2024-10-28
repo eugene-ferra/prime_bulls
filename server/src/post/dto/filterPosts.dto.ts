@@ -1,7 +1,8 @@
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { BaseFilterDto } from '../../common/dto/baseFIlter.dto.js';
 
-export class FilterPostsDto {
+export class FilterPostsDto extends BaseFilterDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
@@ -16,26 +17,4 @@ export class FilterPostsDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
-
-  @ApiPropertyOptional({ enum: ['createdAt'] })
-  @IsOptional()
-  @IsIn(['createdAt'])
-  orderBy?: string;
-
-  @ApiPropertyOptional({ enum: ['asc', 'desc'] })
-  @IsOptional()
-  @IsIn(['asc', 'desc'])
-  orderMode?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  limit?: number;
 }

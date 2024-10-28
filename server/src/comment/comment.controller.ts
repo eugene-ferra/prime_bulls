@@ -14,11 +14,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { CommentService } from './comment.service.js';
-import { AccessGuard } from '../guards/access.guard.js';
+import { AccessGuard } from '../common/guards/access.guard.js';
 import { CreateCommentDto } from './dto/createComment.dto.js';
 import { UpdateCommentDto } from './dto/updateComment.dto.js';
 import { FilterCommentsDto } from './dto/filterComment.dto.js';
-import { CommentEntity } from './entities/commentEntity.js';
+import { CommentEntity } from './entities/comment.entity.js';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,

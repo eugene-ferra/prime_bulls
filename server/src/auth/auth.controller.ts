@@ -14,8 +14,8 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { RefreshGuard } from '../guards/refresh.guard.js';
-import { AccessGuard } from '../guards/access.guard.js';
+import { RefreshGuard } from '../common/guards/refresh.guard.js';
+import { AccessGuard } from '../common/guards/access.guard.js';
 
 @ApiTags('auth')
 @Controller('auth')

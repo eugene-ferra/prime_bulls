@@ -1,14 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { MinioService } from 'nestjs-minio-client';
-import { ConfigService } from '@nestjs/config';
 import sharp from 'sharp';
 
 @Injectable()
-export class MinioClientService {
-  constructor(
-    private readonly minioService: MinioService,
-    private readonly config: ConfigService,
-  ) {}
+export class ImageService {
+  constructor(private readonly minioService: MinioService) {}
 
   async saveImage(
     image: Express.Multer.File,

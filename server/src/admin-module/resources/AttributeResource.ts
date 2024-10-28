@@ -8,7 +8,7 @@ import { ResourceWithOptions } from 'adminjs';
 
 import { componentLoader } from '../componentLoader.js';
 import { requiredFeature } from '../features/requiredValidation.js';
-import { PrismaService } from '../../prisma-service/prisma-service.service.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 
 const listProperties = ['name'];

@@ -18,8 +18,8 @@ import {
   FileTypeValidator,
 } from '@nestjs/common';
 import { ReviewService } from './review.service.js';
-import { CreateReviewDto } from './dto/create-review.dto.js';
-import { UpdateReviewDto } from './dto/update-review.dto.js';
+import { CreateReviewDto } from './dto/createReview.dto.js';
+import { UpdateReviewDto } from './dto/updateReview.dto.js';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -32,8 +32,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ReviewEntity } from './entities/review.entity.js';
-import { FilterReviewDto } from './dto/filter-review.dto.js';
-import { AccessGuard } from '../guards/access.guard.js';
+import { FilterReviewDto } from './dto/filterReview.dto.js';
+import { AccessGuard } from '../common/guards/access.guard.js';
 import { FilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('reviews')

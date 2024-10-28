@@ -3,7 +3,7 @@ import { targetRelationSettingsFeature } from '@adminjs/relations';
 import { ResourceWithOptions } from 'adminjs';
 
 import { requiredFeature } from '../features/requiredValidation.js';
-import { PrismaService } from '../../prisma-service/prisma-service.service.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 
 export const createProductVariantResource = (): ResourceWithOptions => ({
   resource: { model: getModelByName('ProductVariant'), client: new PrismaService() },

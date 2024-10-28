@@ -1,11 +1,12 @@
 import { IsBoolean, IsNumber, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseFilterDto } from '../../common/dto/baseFIlter.dto.js';
-export class FilterCommentsDto extends BaseFilterDto {
+
+export class FilterReviewDto extends BaseFilterDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsNumber()
-  postId?: number;
+  productId?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -15,7 +16,7 @@ export class FilterCommentsDto extends BaseFilterDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsNumber()
-  parentCommentId?: number;
+  parentReviewId?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()

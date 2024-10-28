@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MinioClientService } from './minio.service.js';
+import { ImageService } from './image.service.js';
 
 describe('MinioService', () => {
-  let service: MinioClientService;
+  let service: ImageService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MinioClientService],
+      providers: [ImageService],
     }).compile();
 
-    service = module.get<MinioClientService>(MinioClientService);
+    service = module.get<ImageService>(ImageService);
   });
 
   it('should be defined', () => {

@@ -14,9 +14,9 @@ import {
   FileTypeValidator,
 } from '@nestjs/common';
 import { UserService } from './user.service.js';
-import { AccessGuard } from '../guards/access.guard.js';
+import { AccessGuard } from '../common/guards/access.guard.js';
 import { UserEntity } from './entities/user.entity.js';
-import { UpdateUserPasswordDto } from './dto/updateUserPassword.js';
+import { UpdateUserPasswordDto } from './dto/updateUserPassword.dto.js';
 import { UpdateUserInfoDto } from './dto/updateUserInfo.dto.js';
 import {
   ApiBadRequestResponse,

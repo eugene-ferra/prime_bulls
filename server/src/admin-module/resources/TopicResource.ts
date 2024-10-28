@@ -9,7 +9,7 @@ import { ResourceWithOptions } from 'adminjs';
 import { componentLoader } from '../componentLoader.js';
 import { requiredFeature } from '../features/requiredValidation.js';
 import { slugifyFeature } from '../features/slugifyFeature.js';
-import { PrismaService } from '../../prisma-service/prisma-service.service.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 
 const editProperties = ['name', 'isActive'];

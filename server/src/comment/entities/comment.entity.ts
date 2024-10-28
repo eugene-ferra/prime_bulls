@@ -1,6 +1,6 @@
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { CommentAuthorEntity } from './commentAuthorEntity.js';
 import { ApiProperty } from '@nestjs/swagger';
+import { AuthorEntity } from '../../common/entities/author.entity.js';
 
 @Exclude()
 export class CommentEntity {
@@ -16,10 +16,10 @@ export class CommentEntity {
   @Expose()
   content: string;
 
-  @ApiProperty({ type: () => CommentAuthorEntity })
+  @ApiProperty({ type: () => AuthorEntity })
   @Expose()
-  @Transform(({ obj }) => new CommentAuthorEntity(obj.user))
-  user: CommentAuthorEntity;
+  @Transform(({ obj }) => new AuthorEntity(obj.user))
+  user: AuthorEntity;
 
   @ApiProperty({ type: () => [CommentEntity] })
   @Expose()

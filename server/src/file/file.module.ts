@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MinioModule } from 'nestjs-minio-client';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MinioClientService } from './minio.service.js';
+import { ImageService } from './image.service.js';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { MinioClientService } from './minio.service.js';
       },
     }),
   ],
-  providers: [MinioClientService],
-  exports: [MinioClientService],
+  providers: [ImageService],
+  exports: [ImageService],
 })
-export class MinioClientModule {}
+export class FileModule {}

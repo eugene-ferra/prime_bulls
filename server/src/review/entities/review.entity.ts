@@ -1,7 +1,7 @@
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { ReviewAuthorEntity } from './review-author.entity.js';
-import { ReviewImageEntity } from './review-image.entity.js';
+import { AuthorEntity } from '../../common/entities/author.entity.js';
+import { ImageEntity } from '../../common/entities/image.entity.js';
 
 @Exclude()
 export class ReviewEntity {
@@ -21,22 +21,22 @@ export class ReviewEntity {
   @Expose()
   rating?: number;
 
-  @ApiProperty({ type: () => ReviewAuthorEntity })
+  @ApiProperty({ type: () => AuthorEntity })
   @Expose()
-  @Transform(({ obj }) => new ReviewAuthorEntity(obj.user))
-  user?: ReviewAuthorEntity;
+  @Transform(({ obj }) => new AuthorEntity(obj.user))
+  user?: AuthorEntity;
 
   @ApiProperty({ type: () => [ReviewEntity] })
   @Expose()
   @Transform(({ value }) => value?.map((item: ReviewEntity) => new ReviewEntity(item)))
   reviews?: ReviewEntity[];
 
-  @ApiProperty({ type: () => [ReviewImageEntity] })
+  @ApiProperty({ type: () => [ImageEntity] })
   @Expose()
   @Transform(({ value }) =>
-    value?.map((item: ReviewImageEntity) => new ReviewImageEntity({ url: item.url, altText: item.altText })),
+    value?.map((item: ImageEntity) => new ImageEntity({ url: item.url, altText: item.altText })),
   )
-  images?: ReviewImageEntity[];
+  images?: ImageEntity[];
 
   @ApiProperty()
   @Expose()

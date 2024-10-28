@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { PostImageEntity } from './PostImageEntity.js';
-import { PostTopicEntity, TopicEntity } from './topicEntity.js';
+import { PostTopicEntity, TopicEntity } from './topic.entity.js';
+import { ImageEntity } from '../../common/entities/image.entity.js';
 
 @Exclude()
 export class SimplePostEntity {
@@ -21,10 +21,10 @@ export class SimplePostEntity {
   @Expose()
   content: string;
 
-  @ApiProperty({ type: () => PostImageEntity })
+  @ApiProperty({ type: () => ImageEntity })
   @Expose()
-  @Transform(({ obj }) => new PostImageEntity({ url: obj.coverImageUrl, altText: obj.coverImageAltText }))
-  coverImage: PostImageEntity;
+  @Transform(({ obj }) => new ImageEntity({ url: obj.coverImageUrl, altText: obj.coverImageAltText }))
+  coverImage: ImageEntity;
 
   @ApiProperty({ type: () => [TopicEntity] })
   @Expose()

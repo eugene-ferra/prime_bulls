@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateReviewDto } from './dto/create-review.dto.js';
-import { UpdateReviewDto } from './dto/update-review.dto.js';
-import { PrismaService } from '../prisma-service/prisma-service.service.js';
+import { CreateReviewDto } from './dto/createReview.dto.js';
+import { UpdateReviewDto } from './dto/updateReview.dto.js';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { ProductService } from '../product/product.service.js';
 import { UserService } from '../user/user.service.js';
-import { MinioClientService } from '../minio/minio.service.js';
-import { FilterReviewDto } from './dto/filter-review.dto.js';
+import { ImageService } from '../file/image.service.js';
+import { FilterReviewDto } from './dto/filterReview.dto.js';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class ReviewService {
     private readonly prismaService: PrismaService,
     private readonly productService: ProductService,
     private readonly userService: UserService,
-    private readonly imageService: MinioClientService,
+    private readonly imageService: ImageService,
   ) {}
 
   private folder = 'reviews';

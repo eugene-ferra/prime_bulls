@@ -7,7 +7,7 @@ import { componentLoader, CustomComponents } from '../componentLoader.js';
 import { requiredFeature } from '../features/requiredValidation.js';
 import { slugifyFeature } from '../features/slugifyFeature.js';
 import { MinioProvider } from '../providers/MinioProvider.js';
-import { PrismaService } from '../../prisma-service/prisma-service.service.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import { ConfigService } from '@nestjs/config';
 
 const list = ['id', 'title', 'cover', 'coverImageAltText', 'isActive', 'createdAt'];

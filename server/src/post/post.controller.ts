@@ -10,7 +10,7 @@ import {
 import { PostService } from './post.service.js';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { FilterPostsDto } from './dto/filterPosts.dto.js';
-import { SimplePostEntity } from './entities/simplePostEntity.js';
+import { SimplePostEntity } from './entities/simplePost.entity.js';
 
 @ApiTags('posts')
 @Controller('posts')

@@ -11,7 +11,7 @@ import { ProductService } from './product.service.js';
 import { FilterProductsDto } from './dto/filterProducts.dto.js';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ExpandedProductEntity } from './entities/expandedProductEntity.js';
-import { SimpleProductEntity } from './entities/simpleProductEntity.js';
+import { SimpleProductEntity } from './entities/simpleProduct.entity.js';
 
 @ApiTags('products')
 @Controller('products')
