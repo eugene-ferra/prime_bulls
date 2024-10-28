@@ -5,6 +5,10 @@ import { Exclude, Expose } from 'class-transformer';
 export class TopicEntity {
   @ApiProperty()
   @Expose()
+  id: number;
+
+  @ApiProperty()
+  @Expose()
   name: string;
 
   @ApiProperty()

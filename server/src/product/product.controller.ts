@@ -12,11 +12,25 @@ import { FilterProductsDto } from './dto/filterProducts.dto.js';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ExpandedProductEntity } from './entities/expandedProductEntity.js';
 import { SimpleProductEntity } from './entities/simpleProduct.entity.js';
+import { CategoryService } from './category.service.js';
+import { ProductCategoryEntity } from './entities/productCategory.entity.js';
 
 @ApiTags('products')
 @Controller('products')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    private readonly categoryService: CategoryService,
+  ) {}
+
+  @ApiOkResponse({ description: 'Retrieves all product categories', type: [ProductCategoryEntity] })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('/categories')
+  async getCategories() {
+    const docs = await this.categoryService.findAll();
+
+    return docs.map((item) => new ProductCategoryEntity(item));
+  }
 
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()

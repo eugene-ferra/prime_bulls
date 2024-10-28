@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
+import { ImageEntity } from '../../common/entities/image.entity.js';
 
 @Exclude()
 export class ProductCategoryEntity {
@@ -14,6 +15,11 @@ export class ProductCategoryEntity {
   @ApiProperty()
   @Expose()
   slug: string;
+
+  @ApiProperty()
+  @Expose()
+  @Transform(({ obj }) => new ImageEntity({ url: obj.iconUrl, altText: obj.altText }))
+  icon?: ImageEntity;
 
   constructor(partial: Partial<ProductCategoryEntity>) {
     Object.assign(this, partial);

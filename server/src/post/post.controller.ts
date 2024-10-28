@@ -11,11 +11,25 @@ import { PostService } from './post.service.js';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { FilterPostsDto } from './dto/filterPosts.dto.js';
 import { SimplePostEntity } from './entities/simplePost.entity.js';
+import { TopicEntity } from './entities/topic.entity.js';
+import { TopicService } from './topic.service.js';
 
 @ApiTags('posts')
 @Controller('posts')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+  constructor(
+    private readonly postService: PostService,
+    private readonly topicService: TopicService,
+  ) {}
+
+  @ApiOkResponse({ description: 'Retrieves all posts topics', type: [TopicEntity] })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('/topics')
+  async getCategories() {
+    const docs = await this.topicService.findAll();
+
+    return docs.map((item) => new TopicEntity(item));
+  }
 
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
