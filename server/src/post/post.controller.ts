@@ -1,13 +1,16 @@
 import {
   ClassSerializerInterceptor,
   Controller,
+  Delete,
   Get,
-  Header,
   Headers,
   Ip,
   NotFoundException,
   Param,
+  Post,
   Query,
+  Req,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { PostService } from './post.service.js';
@@ -16,6 +19,8 @@ import { FilterPostsDto } from './dto/filterPosts.dto.js';
 import { SimplePostEntity } from './entities/simplePost.entity.js';
 import { TopicEntity } from './entities/topic.entity.js';
 import { TopicService } from './topic.service.js';
+import { AccessGuard } from '../common/guards/access.guard.js';
+import { Request } from 'express';
 
 @ApiTags('posts')
 @Controller('posts')
@@ -78,5 +83,24 @@ export class PostController {
     await this.postService.addView(post.id, { ip, userAgent });
 
     return new SimplePostEntity(post);
+  }
+
+  @ApiBadRequestResponse()
+  @ApiOkResponse()
+  @UseGuards(AccessGuard)
+  @Post(':id/like')
+  async addLikeToComment(@Param('id') id: number, @Req() req: Request) {
+    await this.postService.addlike(id, req.user.id);
+
+    return;
+  }
+
+  @ApiBadRequestResponse()
+  @ApiOkResponse()
+  @UseGuards(AccessGuard)
+  @Delete(':id/like')
+  async removelikeFromComment(@Param('id') id: number, @Req() req: Request) {
+    await this.postService.removeLike(id, req.user.id);
+    return;
   }
 }

@@ -141,4 +141,22 @@ export class ReviewController {
 
     return await this.reviewService.delete(id, req.user.id);
   }
+
+  @ApiBadRequestResponse()
+  @ApiOkResponse()
+  @UseGuards(AccessGuard)
+  @Post(':id/like')
+  async addLikeToComment(@Param('id') id: number, @Req() req: Request) {
+    await this.reviewService.addlike(id, req.user.id);
+    return;
+  }
+
+  @ApiBadRequestResponse()
+  @ApiOkResponse()
+  @UseGuards(AccessGuard)
+  @Delete(':id/like')
+  async removelikeFromComment(@Param('id') id: number, @Req() req: Request) {
+    await this.reviewService.removeLike(id, req.user.id);
+    return;
+  }
 }

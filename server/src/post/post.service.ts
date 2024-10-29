@@ -1,14 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { FilterPostsDto } from './dto/filterPosts.dto.js';
-import { DeviceDto } from 'src/common/dto/device.dto.js';
+import { DeviceDto } from '../common/dto/device.dto.js';
+import { UserService } from '../user/user.service.js';
 
 @Injectable()
 export class PostService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private userService: UserService,
+  ) {}
 
-  private _defaultInclude: Prisma.PostInclude = { topics: { include: { topic: true } }, views: true };
+  private _defaultInclude: Prisma.PostInclude = {
+    topics: { include: { topic: true } },
+    views: true,
+    likes: true,
+  };
 
   async findAll(payload: FilterPostsDto) {
     const where = this.getWhereClause(payload);
@@ -48,6 +56,22 @@ export class PostService {
     if (isViewed) return;
 
     await this.prisma.view.create({ data: { postId, ip, userAgent } });
+  }
+
+  async addlike(postId: number, userId: number) {
+    const post = await this.findById(postId);
+    if (!post) throw new BadRequestException('Статтю не знайдено!');
+
+    const user = await this.userService.findById(userId);
+    if (!user) throw new BadRequestException('Користувача не знайдено!');
+
+    const isLiked = post.likes.some((like) => like.userId === userId);
+
+    if (!isLiked) await this.prisma.postLike.create({ data: { postId, userId } });
+  }
+
+  async removeLike(postId: number, userId: number) {
+    await this.prisma.postLike.deleteMany({ where: { postId, userId } });
   }
 
   private async countDocs(input: Prisma.PostWhereInput) {

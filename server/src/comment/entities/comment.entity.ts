@@ -19,7 +19,7 @@ export class CommentEntity {
   @ApiProperty({ type: () => AuthorEntity })
   @Expose()
   @Transform(({ obj }) => new AuthorEntity(obj.user))
-  user: AuthorEntity;
+  user?: AuthorEntity;
 
   @ApiProperty({ type: () => [CommentEntity] })
   @Expose()
@@ -29,6 +29,11 @@ export class CommentEntity {
   @ApiProperty()
   @Expose()
   replyCount?: number;
+
+  @ApiProperty()
+  @Expose()
+  @Transform(({ value }) => value?.map((item) => ({ userId: item.userId })))
+  likes?: any[];
 
   constructor(partial: Partial<CommentEntity>) {
     Object.assign(this, partial);

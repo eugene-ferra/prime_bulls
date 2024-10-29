@@ -42,6 +42,11 @@ export class ReviewEntity {
   @Expose()
   replyCount?: number;
 
+  @ApiProperty()
+  @Expose()
+  @Transform(({ value }) => value?.map((item) => ({ userId: item.userId })))
+  likes?: any[];
+
   constructor(partial: Partial<ReviewEntity>) {
     Object.assign(this, partial);
   }

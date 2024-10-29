@@ -93,4 +93,24 @@ export class CommentController {
 
     return await this.commentService.delete(id, req.user.id);
   }
+
+  @ApiBadRequestResponse()
+  @ApiOkResponse({ type: CommentEntity })
+  @UseGuards(AccessGuard)
+  @Post(':id/like')
+  async addLikeToComment(@Param('id') id: number, @Req() req: Request) {
+    await this.commentService.addlike(id, req.user.id);
+
+    return;
+  }
+
+  @ApiBadRequestResponse()
+  @ApiOkResponse({ type: CommentEntity })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(AccessGuard)
+  @Delete(':id/like')
+  async removelikeFromComment(@Param('id') id: number, @Req() req: Request) {
+    await this.commentService.removeLike(id, req.user.id);
+    return;
+  }
 }

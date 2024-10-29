@@ -108,7 +108,12 @@ export class ReviewService {
     const [reviews, totalDocs] = await Promise.all([
       this.prismaService.review.findMany({
         where,
-        include: { images: true, user: true, reviews: { include: { images: true, user: true } } },
+        include: {
+          images: true,
+          user: true,
+          reviews: { include: { images: true, user: true, likes: true } },
+          likes: true,
+        },
         orderBy,
         skip,
         take,
@@ -142,8 +147,24 @@ export class ReviewService {
   async findById(id: number) {
     return this.prismaService.review.findUnique({
       where: { id },
-      include: { images: true, reviews: true, user: true },
+      include: { images: true, reviews: true, user: true, likes: true },
     });
+  }
+
+  async addlike(reviewId: number, userId: number) {
+    const review = await this.findById(reviewId);
+    if (!review) throw new BadRequestException('Відгук не знайдено!');
+
+    const user = await this.userService.findById(userId);
+    if (!user) throw new BadRequestException('Користувача не знайдено!');
+
+    const isLiked = review.likes.some((like) => like.userId === userId);
+
+    if (!isLiked) await this.prismaService.reviewLike.create({ data: { reviewId, userId } });
+  }
+
+  async removeLike(reviewId: number, userId: number) {
+    await this.prismaService.reviewLike.deleteMany({ where: { reviewId, userId } });
   }
 
   private getWhereClause(payload: FilterReviewDto): Prisma.ReviewWhereInput {

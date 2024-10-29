@@ -15,6 +15,12 @@ export class CommentService {
     private readonly userService: UserService,
   ) {}
 
+  private _defaultInclude: Prisma.CommentInclude = {
+    comments: { include: { user: true, likes: true } },
+    user: true,
+    likes: true,
+  };
+
   async findAll(filters: FilterCommentsDto) {
     const where = this.getWhereClause(filters);
     const orderBy = this.getOrderByClause(filters);
@@ -23,7 +29,7 @@ export class CommentService {
     const [comments, totalDocs] = await Promise.all([
       await this.prismaService.comment.findMany({
         where,
-        include: { comments: { include: { user: true } }, user: true },
+        include: this._defaultInclude,
         orderBy,
         skip,
         take,
@@ -86,7 +92,23 @@ export class CommentService {
   }
 
   async findById(id: number) {
-    return this.prismaService.comment.findUnique({ where: { id } });
+    return await this.prismaService.comment.findUnique({ where: { id }, include: this._defaultInclude });
+  }
+
+  async addlike(commentId: number, userId: number) {
+    const comment = await this.findById(commentId);
+    if (!comment) throw new BadRequestException('Коментар не знайдено!');
+
+    const user = await this.userService.findById(userId);
+    if (!user) throw new BadRequestException('Користувача не знайдено!');
+
+    const isLiked = comment.likes.some((like) => like.userId === userId);
+
+    if (!isLiked) await this.prismaService.commentLike.create({ data: { commentId, userId } });
+  }
+
+  async removeLike(commentId: number, userId: number) {
+    await this.prismaService.commentLike.deleteMany({ where: { commentId, userId } });
   }
 
   private getWhereClause(payload: FilterCommentsDto): Prisma.CommentWhereInput {
