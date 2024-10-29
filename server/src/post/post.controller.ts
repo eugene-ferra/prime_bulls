@@ -2,6 +2,9 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Header,
+  Headers,
+  Ip,
   NotFoundException,
   Param,
   Query,
@@ -61,12 +64,18 @@ export class PostController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':slug')
-  async findOne(@Param('slug') slug: string): Promise<SimplePostEntity> {
+  async findOne(
+    @Param('slug') slug: string,
+    @Ip() ip: string,
+    @Headers('user-agent') userAgent: string,
+  ): Promise<SimplePostEntity> {
     const post = await this.postService.findBySlug(slug);
 
     if (!post) {
       throw new NotFoundException('Статтю не знайдено!');
     }
+
+    await this.postService.addView(post.id, { ip, userAgent });
 
     return new SimplePostEntity(post);
   }

@@ -31,7 +31,12 @@ export class SimplePostEntity {
   @Transform(({ value }) => value.map((item) => new TopicEntity(item.topic)))
   topics?: PostTopicEntity[];
 
-  // TODO: add views and likes data
+  // TODO:  and likes data
+
+  @ApiProperty()
+  @Expose()
+  @Transform(({ obj }) => obj.views.length)
+  views: any;
 
   @ApiProperty()
   @Expose()

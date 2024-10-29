@@ -3,7 +3,7 @@ import { UserService } from '../user/user.service.js';
 import { TokensDto } from './dto/tokens.dto.js';
 import { RegisterByEmailDto } from './dto/registerByEmail.dto.js';
 import { LoginByEmailDto } from './dto/loginByEmail.dto.js';
-import { DeviceDto } from './dto/device.dto.js';
+import { DeviceDto } from '../common/dto/device.dto.js';
 import { SessionService } from './session.service.js';
 import { TokenService } from './token.service.js';
 

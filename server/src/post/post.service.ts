@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { FilterPostsDto } from './dto/filterPosts.dto.js';
+import { DeviceDto } from 'src/common/dto/device.dto.js';
 
 @Injectable()
 export class PostService {
   constructor(private prisma: PrismaService) {}
 
-  private _defaultInclude: Prisma.PostInclude = { topics: { include: { topic: true } } };
+  private _defaultInclude: Prisma.PostInclude = { topics: { include: { topic: true } }, views: true };
 
   async findAll(payload: FilterPostsDto) {
     const where = this.getWhereClause(payload);
@@ -27,17 +28,26 @@ export class PostService {
     };
   }
 
-  async findById(
-    id: number,
-  ): Promise<Prisma.PostGetPayload<{ include: { topics: { include: { topic: true } } } }> | null> {
+  async findById(id: number) {
     return await this.prisma.post.findUnique({
       where: { id },
-      include: { topics: { include: { topic: true } } },
+      include: this._defaultInclude,
     });
   }
 
   async findBySlug(slug: string) {
     return await this.prisma.post.findFirst({ where: { slug }, include: this._defaultInclude });
+  }
+
+  async addView(postId: number, device: DeviceDto) {
+    const { ip, userAgent } = device;
+    const post = await this.prisma.post.findUnique({ where: { id: postId }, include: { views: true } });
+    if (!post) return;
+
+    const isViewed = post.views.some((view) => view.ip === ip && view.userAgent === userAgent);
+    if (isViewed) return;
+
+    await this.prisma.view.create({ data: { postId, ip, userAgent } });
   }
 
   private async countDocs(input: Prisma.PostWhereInput) {

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Headers, Ip, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterByEmailDto } from './dto/registerByEmail.dto.js';
-import { DeviceDto } from './dto/device.dto.js';
+import { DeviceDto } from '../common/dto/device.dto.js';
 import { Request, Response } from 'express';
 import { MailService } from '../mail/mail.service.js';
 import { LoginByEmailDto } from './dto/loginByEmail.dto.js';
