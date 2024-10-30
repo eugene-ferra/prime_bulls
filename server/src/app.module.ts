@@ -10,6 +10,7 @@ import { MailModule } from './mail/mail.module.js';
 import { FileModule } from './file/file.module.js';
 import { CommentModule } from './comment/comment.module.js';
 import { ReviewModule } from './review/review.module.js';
+import { CartModule } from './cart/cart.module.js';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ReviewModule } from './review/review.module.js';
     FileModule,
     CommentModule,
     ReviewModule,
+    CartModule,
   ],
   controllers: [],
   providers: [PrismaService],

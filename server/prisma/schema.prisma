@@ -43,6 +43,7 @@ model Variant {
   name String
 
   productVariants ProductVariant[]
+  cartItemVariants CartItemVariant[]
 }
 
 model ProductVariant{
@@ -55,6 +56,7 @@ model ProductVariant{
   
   variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItemVariants CartItemVariant[]
 }
 
 model Category {
@@ -248,8 +250,22 @@ model CartItem {
   userId Int
   quantity Int @default(1)
 
-  Product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  cartItemVariants CartItemVariant[]
+}
+
+model CartItemVariant {
+  id Int @id @default(autoincrement())
+  cartItemId Int
+  variantNameId Int
+  variantValueId Int
+  
+  cartItem CartItem @relation(fields: [cartItemId], references: [id], onDelete: Cascade)
+  variantName Variant @relation(fields: [variantNameId], references: [id], onDelete: Cascade)
+  variantValue ProductVariant @relation(fields: [variantValueId], references: [id], onDelete: Cascade)
 }
 
 model SavedProduct {
