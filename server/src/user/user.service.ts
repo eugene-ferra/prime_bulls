@@ -9,6 +9,8 @@ import slugify from 'slugify';
 import { UserAddressDto } from './dto/userAddress.dto.js';
 import { UpdateUserAddressDto } from './dto/updateUserAddress.dto.js';
 import { ProductService } from '../product/product.service.js';
+import crypto from 'crypto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
@@ -16,6 +18,7 @@ export class UserService {
     private prisma: PrismaService,
     private minioService: ImageService,
     private productService: ProductService,
+    private configService: ConfigService,
   ) {}
 
   private folder = 'users';
@@ -163,5 +166,46 @@ export class UserService {
 
     await this.prisma.savedProduct.delete({ where: { userId_productId: { userId, productId } } });
     return await this.findById(userId);
+  }
+
+  async generateResetToken(email: string) {
+    const user = await this.findByEmail(email);
+    if (!user) throw new NotFoundException('Користувача не знайдено!');
+
+    const plainResetToken = crypto.randomBytes(32).toString('hex');
+    const hashedResetToken = crypto.createHash('sha256').update(plainResetToken).digest('hex');
+    const tokenLifeTime = this.configService.getOrThrow<number>('RESET_PASSWORD_TOKEN_LIFETIME');
+    const expiredAt = new Date(Date.now() + +tokenLifeTime);
+
+    await this.prisma.user.update({
+      where: { email },
+      data: {
+        passwordResetToken: hashedResetToken,
+        passwordResetTokenExpiredAt: expiredAt,
+      },
+    });
+
+    return {
+      token: plainResetToken,
+      expiredAt: expiredAt,
+    };
+  }
+
+  async resetPassword(email: string, token: string, newPassword: string) {
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new NotFoundException('Користувача не знайдено!');
+
+    if (user.passwordResetToken !== hashedToken || user.passwordResetTokenExpiredAt < new Date())
+      throw new BadRequestException('Невірний токен або термін дії токена закінчився!');
+
+    const newHashedPassword = await this.hashPassword(newPassword);
+    await this.prisma.user.update({
+      where: { email },
+      data: { password: newHashedPassword, passwordResetToken: null, passwordResetTokenExpiredAt: null },
+    });
+
+    return await this.findByEmail(email);
   }
 }

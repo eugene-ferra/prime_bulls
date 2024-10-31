@@ -1,18 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, IsStrongPassword, Max, Min } from 'class-validator';
+import { IsEmail, IsOptional, IsString, IsStrongPassword, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterByEmailDto {
   @ApiProperty({ required: true })
   @IsString()
-  @Min(3, { message: "Ім'я повинно містити не менше 3 символів" })
-  @Max(30, { message: "Ім'я повинно містити не більше 30 символів" })
+  @MinLength(3, { message: "Ім'я повинно містити не менше 3 символів" })
+  @MaxLength(30, { message: "Ім'я повинно містити не більше 30 символів" })
   name: string;
 
   @ApiProperty()
   @IsOptional()
   @IsString()
-  @Min(3, { message: 'Прізвище повинно містити не менше 3 символів' })
-  @Max(30, { message: 'Прізвище повинно містити не більше 30 символів' })
+  @MinLength(3, { message: 'Прізвище повинно містити не менше 3 символів' })
+  @MaxLength(30, { message: 'Прізвище повинно містити не більше 30 символів' })
   lastName: string;
 
   @ApiProperty({ required: true })

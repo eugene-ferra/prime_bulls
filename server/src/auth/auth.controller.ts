@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Ip, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Ip, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterByEmailDto } from './dto/registerByEmail.dto.js';
 import { DeviceDto } from '../common/dto/device.dto.js';
@@ -18,6 +18,8 @@ import { RefreshGuard } from '../common/guards/refresh.guard.js';
 import { AccessGuard } from '../common/guards/access.guard.js';
 import { setAuthCookies } from './helpers/setAuthCookies.js';
 import { clearAuthCookies } from './helpers/clearAuthCookies.js';
+import { ForgotPasswordDto } from './dto/forgotPassword.dto.js';
+import { UserService } from '../user/user.service.js';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -25,6 +27,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly mailService: MailService,
+    private readonly userService: UserService,
   ) {}
 
   @ApiBadRequestResponse()
@@ -90,6 +93,25 @@ export class AuthController {
     setAuthCookies(res, tokens);
 
     res.status(200).json({ status: 'success' });
+  }
+
+  @ApiBadRequestResponse()
+  @ApiOkResponse()
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: ForgotPasswordDto) {
+    const { email } = body;
+    const { token, expiredAt } = await this.userService.generateResetToken(email);
+
+    await this.mailService.sendForgotPassword(email, token, expiredAt);
+  }
+
+  @ApiBadRequestResponse()
+  @ApiOkResponse({
+    description: 'resets user password',
+  })
+  @Patch('reset-password/:token')
+  async resetPassword(@Param('token') token: string, @Body() body: LoginByEmailDto) {
+    await this.userService.resetPassword(body.email, token, body.password);
   }
 
   @ApiUnauthorizedResponse()
