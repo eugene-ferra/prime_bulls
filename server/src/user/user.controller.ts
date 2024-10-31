@@ -12,6 +12,9 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  Post,
+  Param,
+  BadRequestException,
 } from '@nestjs/common';
 import { UserService } from './user.service.js';
 import { AccessGuard } from '../common/guards/access.guard.js';
@@ -28,6 +31,8 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
+import { UserAddressDto } from './dto/userAddress.dto.js';
+import { UpdateUserAddressDto } from './dto/updateUserAddress.dto.js';
 
 @ApiTags('users')
 @Controller('users')
@@ -123,6 +128,50 @@ export class UserController {
   @Delete('/me/avatar')
   async deleteAvatar(@Req() req: Request): Promise<UserEntity> {
     const user = await this.userService.deleteAvatar(req.user.id);
+
+    return new UserEntity(user);
+  }
+
+  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
+  @ApiUnauthorizedResponse()
+  @ApiBadRequestResponse()
+  @UseGuards(AccessGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('/me/address')
+  async addAddress(@Req() req: Request, @Body() body: UserAddressDto): Promise<UserEntity> {
+    const user = await this.userService.addAddress(req.user.id, body);
+
+    return new UserEntity(user);
+  }
+
+  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
+  @ApiUnauthorizedResponse()
+  @ApiBadRequestResponse()
+  @UseGuards(AccessGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Patch('/me/address/:addressId')
+  async updateAddress(
+    @Req() req: Request,
+    @Body() body: UpdateUserAddressDto,
+    @Param('id') addressId: number,
+  ): Promise<UserEntity> {
+    if (!addressId) throw new BadRequestException('Не корректна адреса!');
+
+    const user = await this.userService.updateAddress(req.user.id, addressId, body);
+
+    return new UserEntity(user);
+  }
+
+  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
+  @ApiUnauthorizedResponse()
+  @ApiBadRequestResponse()
+  @UseGuards(AccessGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Delete('/me/address/:addressId')
+  async deleteAddress(@Req() req: Request, @Param('id') addressId: number): Promise<UserEntity> {
+    if (!addressId) throw new BadRequestException('Не корректна адреса!');
+
+    const user = await this.userService.deleteAddress(req.user.id, addressId);
 
     return new UserEntity(user);
   }

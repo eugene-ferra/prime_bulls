@@ -6,6 +6,8 @@ import { UpdateUserPasswordDto } from './dto/updateUserPassword.dto.js';
 import * as bcrypt from 'bcrypt';
 import { ImageService } from '../file/image.service.js';
 import slugify from 'slugify';
+import { UserAddressDto } from './dto/userAddress.dto.js';
+import { UpdateUserAddressDto } from './dto/updateUserAddress.dto.js';
 
 @Injectable()
 export class UserService {
@@ -105,5 +107,31 @@ export class UserService {
       where: { id },
       data: { imageUrl: null, mimeType: null, altText: null },
     });
+  }
+
+  async addAddress(id: number, address: UserAddressDto) {
+    const user = await this.findById(id);
+
+    if (!user) throw new NotFoundException('Користувача не знайдено!');
+
+    await this.prisma.address.create({ data: { ...address, userId: id } });
+
+    return await this.findById(id);
+  }
+
+  async updateAddress(userId: number, addressId: number, address: UpdateUserAddressDto) {
+    const user = await this.findById(userId);
+    if (!user) throw new NotFoundException('Користувача не знайдено!');
+
+    await this.prisma.address.update({ where: { userId, id: addressId }, data: address });
+    return await this.findById(userId);
+  }
+
+  async deleteAddress(userId: number, addressId: number) {
+    const user = await this.findById(userId);
+    if (!user) throw new NotFoundException('Користувача не знайдено!');
+
+    await this.prisma.address.delete({ where: { userId, id: addressId } });
+    return await this.findById(userId);
   }
 }
