@@ -275,6 +275,7 @@ model SavedProduct {
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, productId])
 }
 
 model Token {

@@ -24,6 +24,7 @@ import { UpdateUserInfoDto } from './dto/updateUserInfo.dto.js';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiConflictResponse,
   ApiConsumes,
   ApiOkResponse,
   ApiTags,
@@ -172,6 +173,36 @@ export class UserController {
     if (!addressId) throw new BadRequestException('Не корректна адреса!');
 
     const user = await this.userService.deleteAddress(req.user.id, addressId);
+
+    return new UserEntity(user);
+  }
+
+  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
+  @ApiUnauthorizedResponse()
+  @ApiBadRequestResponse()
+  @ApiConflictResponse()
+  @UseGuards(AccessGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post('/me/favorite/:productId')
+  async addFavorite(@Req() req: Request, @Param('productId') productId: number): Promise<UserEntity> {
+    if (!productId) throw new BadRequestException('Не корректний товар!');
+
+    const user = await this.userService.addFavorite(req.user.id, productId);
+
+    return new UserEntity(user);
+  }
+
+  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
+  @ApiUnauthorizedResponse()
+  @ApiBadRequestResponse()
+  @ApiConflictResponse()
+  @UseGuards(AccessGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Delete('/me/favorite/:productId')
+  async removeFavorite(@Req() req: Request, @Param('productId') productId: number): Promise<UserEntity> {
+    if (!productId) throw new BadRequestException('Не корректний товар!');
+
+    const user = await this.userService.removeFavorite(req.user.id, productId);
 
     return new UserEntity(user);
   }

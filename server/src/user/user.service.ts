@@ -8,12 +8,14 @@ import { ImageService } from '../file/image.service.js';
 import slugify from 'slugify';
 import { UserAddressDto } from './dto/userAddress.dto.js';
 import { UpdateUserAddressDto } from './dto/updateUserAddress.dto.js';
+import { ProductService } from '../product/product.service.js';
 
 @Injectable()
 export class UserService {
   constructor(
     private prisma: PrismaService,
     private minioService: ImageService,
+    private productService: ProductService,
   ) {}
 
   private folder = 'users';
@@ -132,6 +134,34 @@ export class UserService {
     if (!user) throw new NotFoundException('Користувача не знайдено!');
 
     await this.prisma.address.delete({ where: { userId, id: addressId } });
+    return await this.findById(userId);
+  }
+
+  async addFavorite(userId: number, productId: number) {
+    const user = await this.findById(userId);
+    if (!user) throw new NotFoundException('Користувача не знайдено!');
+
+    const product = await this.productService.findById(productId);
+    if (!product) throw new NotFoundException('Товар не знайдено!');
+
+    const isAdded = await this.prisma.savedProduct.findUnique({
+      where: { userId_productId: { userId, productId } },
+    });
+
+    if (isAdded) throw new ConflictException('Товар вже додано до обраного!');
+
+    await this.prisma.savedProduct.create({ data: { userId, productId } });
+    return await this.findById(userId);
+  }
+
+  async removeFavorite(userId: number, productId: number) {
+    const user = await this.findById(userId);
+    if (!user) throw new NotFoundException('Користувача не знайдено!');
+
+    const product = await this.productService.findById(productId);
+    if (!product) throw new NotFoundException('Товар не знайдено!');
+
+    await this.prisma.savedProduct.delete({ where: { userId_productId: { userId, productId } } });
     return await this.findById(userId);
   }
 }
