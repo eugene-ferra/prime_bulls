@@ -324,7 +324,7 @@ model OrderItem {
 
 model Coupon {
   id Int @id @default(autoincrement())
-  code String
+  code String @unique
   discount Int
   expiredAt DateTime
 

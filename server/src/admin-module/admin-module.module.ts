@@ -16,6 +16,7 @@ import { AdminModule } from '@adminjs/nestjs';
 import { componentLoader } from './componentLoader.js';
 import { dark, light } from '@adminjs/themes';
 import { ConfigService } from '@nestjs/config';
+import { createCouponResource } from './resources/CouponResource.js';
 
 AdminJS.registerAdapter({
   Resource: Resource,
@@ -40,6 +41,7 @@ AdminJS.registerAdapter({
             createPostResource(config),
             createTopicResource(config),
             createPostTopicResource(),
+            createCouponResource(config),
           ],
           componentLoader: componentLoader,
           availableThemes: [light, dark],
