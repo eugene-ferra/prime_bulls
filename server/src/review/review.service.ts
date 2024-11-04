@@ -7,6 +7,8 @@ import { UserService } from '../user/user.service.js';
 import { ImageService } from '../file/image.service.js';
 import { FilterReviewDto } from './dto/filterReview.dto.js';
 import { Prisma } from '@prisma/client';
+import { Review } from './types/review.type.js';
+import { PaginatedResult } from 'src/common/types/paginatedResult.type.js';
 
 @Injectable()
 export class ReviewService {
@@ -19,7 +21,7 @@ export class ReviewService {
 
   private folder = 'reviews';
 
-  async create(userId: number, data: CreateReviewDto, files?: Express.Multer.File[]) {
+  async create(userId: number, data: CreateReviewDto, files?: Express.Multer.File[]): Promise<Review> {
     const product = await this.productService.findById(data.productId);
     if (!product) throw new BadRequestException('Товар не знайдено!');
 
@@ -47,9 +49,11 @@ export class ReviewService {
         })),
       });
     }
+
+    return await this.findById(review.id);
   }
 
-  async delete(id: number, userId: number) {
+  async delete(id: number, userId: number): Promise<void> {
     const review = await this.findById(id);
     if (!review) throw new BadRequestException('Відгук не знайдено!');
 
@@ -64,7 +68,12 @@ export class ReviewService {
     await this.prismaService.review.delete({ where: { id } });
   }
 
-  async update(id: number, userId: number, data: UpdateReviewDto, files?: Express.Multer.File[]) {
+  async update(
+    id: number,
+    userId: number,
+    data: UpdateReviewDto,
+    files?: Express.Multer.File[],
+  ): Promise<Review> {
     const review = await this.findById(id);
     if (!review) throw new BadRequestException('Відгук не знайдено!');
 
@@ -98,9 +107,11 @@ export class ReviewService {
         })),
       });
     }
+
+    return await this.findById(id);
   }
 
-  async findAll(payload: FilterReviewDto) {
+  async findAll(payload: FilterReviewDto): Promise<PaginatedResult<Review>> {
     const where = this.getWhereClause(payload);
     const orderBy = this.getOrderByClause(payload);
     const { skip, take } = this.getPagination(payload);
@@ -122,36 +133,52 @@ export class ReviewService {
     ]);
 
     const reviewsWithReplyCount = await Promise.all(
-      reviews.map(async (review) => {
-        const repliesWithCount = await Promise.all(
-          review.reviews.map(async (reply) => {
-            const replyCount = await this.prismaService.review.count({
-              where: { parentReviewId: reply.id },
-            });
-
-            return { ...reply, replyCount };
-          }),
-        );
-
-        return { ...review, reviews: repliesWithCount };
-      }),
+      reviews.map(async (review) => ({
+        ...review,
+        replyCount: await this.getReplyCount(review.id),
+        reviews: await Promise.all(
+          review.reviews.map(async (reply) => ({
+            ...reply,
+            replyCount: await this.getReplyCount(reply.id),
+          })),
+        ),
+      })),
     );
 
     return {
       data: reviewsWithReplyCount,
-      currentPage: payload.page || 1,
       lastPage: Math.ceil(totalDocs / take),
     };
   }
 
-  async findById(id: number) {
-    return this.prismaService.review.findUnique({
+  async findById(id: number): Promise<Review> {
+    const doc = await this.prismaService.review.findUnique({
       where: { id },
-      include: { images: true, reviews: true, user: true, likes: true },
+      include: {
+        images: true,
+        user: true,
+        likes: true,
+        reviews: { include: { images: true, user: true, likes: true } },
+      },
     });
+
+    if (!doc) throw new BadRequestException('Відгук не знайдено!');
+
+    const docWithReplyCount = {
+      ...doc,
+      replyCount: await this.getReplyCount(doc.id),
+      reviews: await Promise.all(
+        doc.reviews.map(async (reply) => ({
+          ...reply,
+          replyCount: await this.getReplyCount(reply.id),
+        })),
+      ),
+    };
+
+    return docWithReplyCount;
   }
 
-  async addlike(reviewId: number, userId: number) {
+  async addlike(reviewId: number, userId: number): Promise<Review> {
     const review = await this.findById(reviewId);
     if (!review) throw new BadRequestException('Відгук не знайдено!');
 
@@ -161,10 +188,14 @@ export class ReviewService {
     const isLiked = review.likes.some((like) => like.userId === userId);
 
     if (!isLiked) await this.prismaService.reviewLike.create({ data: { reviewId, userId } });
+
+    return await this.findById(reviewId);
   }
 
-  async removeLike(reviewId: number, userId: number) {
+  async removeLike(reviewId: number, userId: number): Promise<Review> {
     await this.prismaService.reviewLike.deleteMany({ where: { reviewId, userId } });
+
+    return await this.findById(reviewId);
   }
 
   private getWhereClause(payload: FilterReviewDto): Prisma.ReviewWhereInput {
@@ -189,5 +220,9 @@ export class ReviewService {
     const skip = (page - 1) * limit;
 
     return { skip, take: limit };
+  }
+
+  private async getReplyCount(reviewId: number): Promise<number> {
+    return this.prismaService.review.count({ where: { parentReviewId: reviewId } });
   }
 }
