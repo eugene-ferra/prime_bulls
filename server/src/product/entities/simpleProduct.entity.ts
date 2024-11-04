@@ -1,47 +1,56 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
-import { ProductCategoryEntity } from './productCategory.entity.js';
+import { CategoryEntity } from './category.entity.js';
 import { ImageEntity } from '../../common/entities/image.entity.js';
+import { SimpleProduct } from '../types/SimpleProduct.type.js';
 
-@Exclude()
 export class SimpleProductEntity {
   @ApiProperty()
-  @Expose()
-  id: number;
+  readonly id: number;
 
   @ApiProperty()
-  @Expose()
-  title: string;
+  readonly title: string;
 
   @ApiProperty()
-  @Expose()
-  slug: string;
+  readonly slug: string;
 
   @ApiProperty()
-  @Expose()
-  subtitle: string;
+  readonly subtitle?: string;
 
   @ApiProperty()
-  @Expose()
-  @Transform(({ value }) => new ProductCategoryEntity(value))
-  category: ProductCategoryEntity;
+  readonly category: CategoryEntity;
 
   @ApiProperty()
-  @Expose()
-  basePrice: number;
+  readonly basePrice: number;
 
   @ApiProperty()
-  @Expose()
-  salePercent: number;
+  readonly salePercent: number;
 
-  @ApiProperty({ type: () => ImageEntity })
-  @Expose()
-  @Transform(({ obj }) => new ImageEntity({ url: obj.coverImageUrl, altText: obj.coverImageAltText }))
-  coverImage: ImageEntity;
+  @ApiProperty()
+  readonly coverImage: ImageEntity;
 
-  // TODO: add reviews data
+  @ApiProperty()
+  readonly isActive: boolean;
 
-  constructor(partial: Partial<SimpleProductEntity>) {
-    Object.assign(this, partial);
+  @ApiProperty()
+  readonly avgRating: number;
+
+  @ApiProperty()
+  readonly reviewCount: number;
+
+  constructor(product: SimpleProduct) {
+    this.id = product.id;
+    this.title = product.title;
+    this.slug = product.slug;
+    this.subtitle = product.subtitle || null;
+    this.category = new CategoryEntity(product.category);
+    this.basePrice = product.basePrice;
+    this.salePercent = product.salePercent;
+    this.coverImage = new ImageEntity({
+      url: product.coverImageUrl,
+      altText: product.coverImageAltText,
+    });
+    this.isActive = product.isActive;
+    this.reviewCount = product.reviewCount;
+    this.avgRating = product.avgReview;
   }
 }

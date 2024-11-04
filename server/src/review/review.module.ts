@@ -7,7 +7,7 @@ import { FileModule } from '../file/file.module.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 @Module({
-  imports: [UserModule, ProductModule, FileModule],
+  imports: [ProductModule, UserModule, FileModule],
   controllers: [ReviewController],
   providers: [PrismaService, ReviewService],
 })

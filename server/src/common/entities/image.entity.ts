@@ -11,7 +11,7 @@ export class ImageEntity {
   @Expose()
   altText: string;
 
-  constructor(partial: Partial<{ url: string; altText: string }>) {
-    Object.assign(this, partial);
+  constructor(data: { url: string; altText: string }) {
+    Object.assign(this, data);
   }
 }

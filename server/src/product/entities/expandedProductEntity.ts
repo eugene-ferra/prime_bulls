@@ -1,76 +1,59 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
 import { ProductVariantEntity } from './productVariant.entity.js';
 import { ProductAttributeEntity } from './productAttribute.entity.js';
-import { ProductCategoryEntity } from './productCategory.entity.js';
 import { ImageEntity } from '../../common/entities/image.entity.js';
+import { ExpandedProduct } from '../types/expandedProduct.type.js';
+import { SimpleProductEntity } from './simpleProduct.entity.js';
 
-@Exclude()
-export class ExpandedProductEntity {
+export class ExpandedProductEntity extends SimpleProductEntity {
   @ApiProperty()
-  @Expose()
-  id: number;
+  readonly description: string;
 
-  @ApiProperty()
-  @Expose()
-  title: string;
+  @ApiProperty({ isArray: true, type: ImageEntity })
+  readonly images: ImageEntity[];
 
-  @ApiProperty()
-  @Expose()
-  slug: string;
+  @ApiProperty({ isArray: true, type: ProductVariantEntity })
+  readonly variants: ProductVariantEntity[];
 
-  @ApiProperty()
-  @Expose()
-  subtitle: string;
+  @ApiProperty({ isArray: true, type: ProductAttributeEntity })
+  readonly attributes: ProductAttributeEntity[];
 
-  @ApiProperty()
-  @Expose()
-  description: string;
+  constructor(product: ExpandedProduct) {
+    super(product);
 
-  @ApiProperty()
-  @Expose()
-  @Transform(({ value }) => new ProductCategoryEntity(value))
-  category: ProductCategoryEntity;
+    this.description = product.description;
+    this.images = this.createImageEntities(product.images);
+    this.attributes = this.createAttributeEntities(product.attributes);
+    this.variants = this.createVariantEntities(product.productVariants);
+  }
 
-  @ApiProperty()
-  @Expose()
-  basePrice: number;
+  private createImageEntities(images: { url: string; altText: string }[]): ImageEntity[] {
+    return images.map(({ url, altText }) => new ImageEntity({ url, altText }));
+  }
 
-  @ApiProperty()
-  @Expose()
-  salePercent: number;
+  private createAttributeEntities(
+    attributes: { value: string; attribute: { name: string } }[],
+  ): ProductAttributeEntity[] {
+    return attributes.map(
+      (attr) =>
+        new ProductAttributeEntity({
+          value: attr.value,
+          name: attr.attribute.name,
+        }),
+    );
+  }
 
-  @ApiProperty({ type: () => ImageEntity })
-  @Expose()
-  @Transform(({ obj }) => ({ url: obj.coverImageUrl, altText: obj.coverImageAltText }))
-  coverImage: ImageEntity;
-
-  @ApiProperty()
-  @Expose()
-  isActive: boolean;
-
-  @ApiProperty()
-  @Expose()
-  createdAt: Date;
-
-  @ApiProperty({ type: () => [ImageEntity] })
-  @Expose()
-  @Transform(({ value }) => value.map((item: ImageEntity) => new ImageEntity(item)))
-  images: ImageEntity[];
-
-  @ApiProperty({ type: () => [ProductVariantEntity] })
-  @Expose()
-  @Transform(({ value }) => value.map((item: ProductVariantEntity) => new ProductVariantEntity(item)))
-  productVariants: ProductVariantEntity[];
-
-  @ApiProperty({ type: () => [ProductAttributeEntity] })
-  @Expose()
-  @Transform(({ value }) => value.map((item: ProductAttributeEntity) => new ProductAttributeEntity(item)))
-  attributes: ProductAttributeEntity[];
-
-  // TODO: add reviews stats
-
-  constructor(partial: Partial<ExpandedProductEntity>) {
-    Object.assign(this, partial);
+  private createVariantEntities(
+    variants: { variant: { name: string }; label: string; effectType: string; amount: number }[],
+  ): ProductVariantEntity[] {
+    return variants.map(
+      ({ variant, label, effectType, amount }) =>
+        new ProductVariantEntity({
+          name: variant.name,
+          label,
+          effectType,
+          amount,
+        }),
+    );
   }
 }

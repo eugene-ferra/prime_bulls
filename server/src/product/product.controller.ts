@@ -13,9 +13,14 @@ import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } fr
 import { ExpandedProductEntity } from './entities/expandedProductEntity.js';
 import { SimpleProductEntity } from './entities/simpleProduct.entity.js';
 import { CategoryService } from './category.service.js';
-import { ProductCategoryEntity } from './entities/productCategory.entity.js';
+import { CategoryEntity } from './entities/category.entity.js';
+import { Pagination } from '../common/types/IPagination.type.js';
+import { ApiPaginatedResponse } from '../common/decorators/apiPaginatedResponse.decorator.js';
 
 @ApiTags('products')
+@ApiBadRequestResponse()
+@ApiNotFoundResponse()
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller('products')
 export class ProductController {
   constructor(
@@ -23,48 +28,42 @@ export class ProductController {
     private readonly categoryService: CategoryService,
   ) {}
 
-  @ApiOkResponse({ description: 'Retrieves all product categories', type: [ProductCategoryEntity] })
-  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiPaginatedResponse(CategoryEntity)
   @Get('/categories')
-  async getCategories() {
+  async getCategories(): Promise<Pagination<CategoryEntity>> {
     const docs = await this.categoryService.findAll();
 
-    return docs.map((item) => new ProductCategoryEntity(item));
+    if (!docs) throw new NotFoundException('Категорій не знайдено!');
+
+    return {
+      docs: docs.map((item) => new CategoryEntity(item)),
+      totalDocs: docs.length,
+      currentPage: 1,
+      totalPages: 1,
+    };
   }
 
-  @ApiBadRequestResponse()
-  @ApiNotFoundResponse()
-  @ApiOkResponse({
-    description: 'Retrieves all products based on query string with filters, sorting and pagination',
-    type: [SimpleProductEntity],
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiPaginatedResponse(SimpleProductEntity)
   @Get('/')
-  async findAll(@Query() query: FilterProductsDto) {
+  async findAll(@Query() query: FilterProductsDto): Promise<Pagination<SimpleProductEntity>> {
     const data = await this.productService.findAll(query);
 
     if (!data.data.length) throw new NotFoundException('Товарів за вказаними параметрами не знайдено!');
 
     return {
-      docs: data.data.map((item) => {
-        return new SimpleProductEntity(item);
-      }),
-      lastPage: data.lastPage,
-      length: data.data.length,
+      docs: data.data.map((item) => new SimpleProductEntity(item)),
+      totalDocs: data.data.length,
+      currentPage: query.page || 1,
+      totalPages: data.lastPage,
     };
   }
 
-  @ApiBadRequestResponse()
-  @ApiNotFoundResponse()
-  @ApiOkResponse({ description: 'Retrieves a single product based on ID', type: ExpandedProductEntity })
-  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiOkResponse({ type: ExpandedProductEntity })
   @Get(':slug')
   async findOne(@Param('slug') slug: string): Promise<ExpandedProductEntity> {
     const product = await this.productService.findBySlug(slug);
 
-    if (!product) {
-      throw new NotFoundException('Товар не знайдено!');
-    }
+    if (!product) throw new NotFoundException('Товар не знайдено!');
 
     return new ExpandedProductEntity(product);
   }

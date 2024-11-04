@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '@prisma/client';
 import { FilterProductsDto } from './dto/filterProducts.dto.js';
+import { PaginatedResult } from 'src/common/types/paginatedResult.type.js';
+import { SimpleProduct } from './types/SimpleProduct.type.js';
+import { ExpandedProduct } from './types/expandedProduct.type.js';
 
 @Injectable()
 export class ProductService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(payload: FilterProductsDto) {
+  async findAll(payload: FilterProductsDto): Promise<PaginatedResult<SimpleProduct>> {
     const where = this.getWhereClause(payload);
     const orderBy = this.getOrderByClause(payload);
     const { skip, take } = this.getPagination(payload);
@@ -18,22 +21,71 @@ export class ProductService {
       this.countDocs(where),
     ]);
 
+    if (!products.length) return { data: [], lastPage: 1 };
+
+    const productsWithReviewData = await Promise.all(
+      products.map(async (product) => {
+        const { reviewCount, avgReview } = await this.aggregateReviewData(product.id);
+        return { ...product, reviewCount, avgReview };
+      }),
+    );
+
     return {
-      data: products,
-      currentPage: payload.page || 1,
+      data: productsWithReviewData,
       lastPage: Math.ceil(totalDocs / take),
     };
   }
 
-  async findById(id: number) {
-    const include = this.getDefaultInclude();
+  async findById(id: number): Promise<ExpandedProduct> {
+    const doc = await this.prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        images: true,
+        attributes: {
+          include: { attribute: true },
+        },
+        productVariants: {
+          include: { variant: true },
+        },
+      },
+    });
 
-    return await this.prisma.product.findUnique({ where: { id }, include });
+    if (!doc) return null;
+
+    const { reviewCount, avgReview } = await this.aggregateReviewData(doc.id);
+    return { ...doc, reviewCount, avgReview };
   }
 
-  async findBySlug(slug: string) {
-    const include = this.getDefaultInclude();
-    return await this.prisma.product.findFirst({ where: { slug }, include });
+  async findBySlug(slug: string): Promise<ExpandedProduct> {
+    const doc = await this.prisma.product.findUnique({
+      where: { slug },
+      include: {
+        category: true,
+        images: true,
+        attributes: {
+          include: { attribute: true },
+        },
+        productVariants: {
+          include: { variant: true },
+        },
+      },
+    });
+
+    if (!doc) return null;
+
+    const { reviewCount, avgReview } = await this.aggregateReviewData(doc.id);
+    return { ...doc, reviewCount, avgReview };
+  }
+
+  async aggregateReviewData(productId: number): Promise<{ reviewCount: number; avgReview: number }> {
+    const reviewAggregation = await this.prisma.review.aggregate({
+      where: { AND: [{ isModerated: true }, { productId: productId }] },
+      _avg: { rating: true },
+      _count: true,
+    });
+
+    return { reviewCount: reviewAggregation._count, avgReview: reviewAggregation._avg.rating };
   }
 
   private async countDocs(where: Prisma.ProductWhereInput) {
@@ -49,7 +101,7 @@ export class ProductService {
     if (payload.categoryId) where.categoryId = payload.categoryId;
     if (payload.minPrice) where.basePrice = { gte: payload.minPrice };
     if (payload.maxPrice) where.basePrice = { lte: payload.maxPrice };
-    if (payload.isActive !== undefined) where.isActive = payload.isActive;
+    where.isActive = true;
 
     return where;
   }
@@ -64,18 +116,5 @@ export class ProductService {
 
     const skip = (page - 1) * limit;
     return { skip, take: limit };
-  }
-
-  private getDefaultInclude(): Prisma.ProductInclude {
-    return {
-      category: true,
-      images: true,
-      attributes: {
-        include: { attribute: true },
-      },
-      productVariants: {
-        include: { variant: true },
-      },
-    };
   }
 }

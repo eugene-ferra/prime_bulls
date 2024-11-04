@@ -1,26 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
 
-@Exclude()
 export class ProductVariantEntity {
   @ApiProperty()
-  @Expose()
   label: string;
 
-  @Expose()
   @ApiProperty()
   effectType: string;
 
-  @Expose()
   @ApiProperty()
   amount: number;
 
   @ApiProperty()
-  @Transform(({ value }) => value.name)
-  @Expose()
-  variant?: string;
+  name: string;
 
-  constructor(partial: Partial<ProductVariantEntity>) {
-    Object.assign(this, partial);
+  constructor(data: { name: string; label: string; effectType: string; amount: number }) {
+    Object.assign(this, data);
   }
 }

@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsInt, IsOptional, IsString } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseFilterDto } from '../../common/dto/baseFIlter.dto.js';
 
 export class FilterProductsDto extends BaseFilterDto {
@@ -32,11 +32,6 @@ export class FilterProductsDto extends BaseFilterDto {
   @ApiPropertyOptional()
   @IsOptional()
   maxPrice?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean;
 
   // TODO: add sorting by rating
 

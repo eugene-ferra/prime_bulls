@@ -11,7 +11,7 @@ async function bootstrap() {
   app.use(cookieParser());
 
   const config = new DocumentBuilder().setTitle('Prime Bulls API').setVersion('1.0').build();
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, config, { deepScanRoutes: true });
   SwaggerModule.setup('docs', app, document);
 
   app.useGlobalPipes(
