@@ -1,31 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
+import { Topic } from '../types/topic.type.js';
 
-@Exclude()
 export class TopicEntity {
   @ApiProperty()
-  @Expose()
   id: number;
 
   @ApiProperty()
-  @Expose()
   name: string;
 
   @ApiProperty()
-  @Expose()
   slug: string;
 
-  constructor(partial: Partial<TopicEntity>) {
-    Object.assign(this, partial);
+  constructor(data: Topic) {
+    this.id = data.id;
+    this.name = data.name;
+    this.slug = data.slug;
   }
-}
-
-@Exclude()
-export class PostTopicEntity {
-  id: number;
-  postId: number;
-  topicId: number;
-  @ApiProperty({ type: () => [TopicEntity] })
-  @Expose()
-  topics?: TopicEntity[];
 }

@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { FilterPostsDto } from './dto/filterPosts.dto.js';
 import { DeviceDto } from '../common/dto/device.dto.js';
 import { UserService } from '../user/user.service.js';
+import { PaginatedResult } from 'src/common/types/paginatedResult.type.js';
+import { Post } from './types/Post.type.js';
 
 @Injectable()
 export class PostService {
@@ -12,42 +14,55 @@ export class PostService {
     private userService: UserService,
   ) {}
 
-  private _defaultInclude: Prisma.PostInclude = {
-    topics: { include: { topic: true } },
-    views: true,
-    likes: true,
-  };
-
-  async findAll(payload: FilterPostsDto) {
+  async findAll(payload: FilterPostsDto): Promise<PaginatedResult<Post>> {
     const where = this.getWhereClause(payload);
     const orderBy = this.getOrderByClause(payload);
     const { skip, take } = this.getPagination(payload);
-    const include = this._defaultInclude;
 
     const [posts, totalDocs] = await Promise.all([
-      this.prisma.post.findMany({ where, include, orderBy, skip, take }),
+      this.prisma.post.findMany({
+        where,
+        include: {
+          topics: { include: { topic: true } },
+          views: true,
+          likes: true,
+        },
+        orderBy,
+        skip,
+        take,
+      }),
       this.countDocs(where),
     ]);
 
     return {
       data: posts,
-      currentPage: payload.page || 1,
       lastPage: Math.ceil(totalDocs / take),
     };
   }
 
-  async findById(id: number) {
+  async findById(id: number): Promise<Post> {
     return await this.prisma.post.findUnique({
       where: { id },
-      include: this._defaultInclude,
+      include: {
+        topics: { include: { topic: true } },
+        views: true,
+        likes: true,
+      },
     });
   }
 
-  async findBySlug(slug: string) {
-    return await this.prisma.post.findFirst({ where: { slug }, include: this._defaultInclude });
+  async findBySlug(slug: string): Promise<Post> {
+    return await this.prisma.post.findFirst({
+      where: { slug },
+      include: {
+        topics: { include: { topic: true } },
+        views: true,
+        likes: true,
+      },
+    });
   }
 
-  async addView(postId: number, device: DeviceDto) {
+  async addView(postId: number, device: DeviceDto): Promise<Post> {
     const { ip, userAgent } = device;
     const post = await this.prisma.post.findUnique({ where: { id: postId }, include: { views: true } });
     if (!post) return;
@@ -56,9 +71,11 @@ export class PostService {
     if (isViewed) return;
 
     await this.prisma.view.create({ data: { postId, ip, userAgent } });
+
+    return await this.findById(postId);
   }
 
-  async addlike(postId: number, userId: number) {
+  async addlike(postId: number, userId: number): Promise<Post> {
     const post = await this.findById(postId);
     if (!post) throw new BadRequestException('Статтю не знайдено!');
 
@@ -68,13 +85,17 @@ export class PostService {
     const isLiked = post.likes.some((like) => like.userId === userId);
 
     if (!isLiked) await this.prisma.postLike.create({ data: { postId, userId } });
+
+    return await this.findById(postId);
   }
 
-  async removeLike(postId: number, userId: number) {
+  async removeLike(postId: number, userId: number): Promise<Post> {
     await this.prisma.postLike.deleteMany({ where: { postId, userId } });
+
+    return await this.findById(postId);
   }
 
-  private async countDocs(input: Prisma.PostWhereInput) {
+  private async countDocs(input: Prisma.PostWhereInput): Promise<number> {
     return await this.prisma.post.count({ where: input });
   }
 

@@ -1,5 +1,4 @@
 import {
-  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
@@ -11,7 +10,6 @@ import {
   Query,
   Req,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { PostService } from './post.service.js';
 import { ApiBadRequestResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
@@ -21,6 +19,8 @@ import { TopicEntity } from './entities/topic.entity.js';
 import { TopicService } from './topic.service.js';
 import { AccessGuard } from '../common/guards/access.guard.js';
 import { Request } from 'express';
+import { ApiPaginatedResponse } from '../common/decorators/apiPaginatedResponse.decorator.js';
+import { Pagination } from '../common/types/IPagination.type.js';
 
 @ApiTags('posts')
 @Controller('posts')
@@ -30,24 +30,24 @@ export class PostController {
     private readonly topicService: TopicService,
   ) {}
 
-  @ApiOkResponse({ description: 'Retrieves all posts topics', type: [TopicEntity] })
-  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiPaginatedResponse(SimplePostEntity)
   @Get('/topics')
-  async getCategories() {
+  async getCategories(): Promise<Pagination<TopicEntity>> {
     const docs = await this.topicService.findAll();
 
-    return docs.map((item) => new TopicEntity(item));
+    return {
+      docs: docs.map((item) => new TopicEntity(item)),
+      totalDocs: docs.length,
+      currentPage: 1,
+      totalPages: 1,
+    };
   }
 
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
-  @ApiOkResponse({
-    description: 'Retrieves all posts based on query string with filters and pagination',
-    type: [SimplePostEntity],
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiPaginatedResponse(SimplePostEntity)
   @Get('/')
-  async findAll(@Query() query: FilterPostsDto) {
+  async findAll(@Query() query: FilterPostsDto): Promise<Pagination<SimplePostEntity>> {
     const data = await this.postService.findAll(query);
 
     if (!data.data.length) throw new NotFoundException('Статей за вказаними параметрами не знайдено!');
@@ -56,18 +56,15 @@ export class PostController {
       docs: data.data.map((item) => {
         return new SimplePostEntity(item);
       }),
-      lastPage: data.lastPage,
-      length: data.data.length,
+      totalDocs: data.data.length,
+      currentPage: query.page || 1,
+      totalPages: data.lastPage,
     };
   }
 
   @ApiBadRequestResponse()
   @ApiNotFoundResponse()
-  @ApiOkResponse({
-    description: 'Retrieves posts based on slug',
-    type: SimplePostEntity,
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiOkResponse({ type: SimplePostEntity })
   @Get(':slug')
   async findOne(
     @Param('slug') slug: string,
@@ -80,27 +77,29 @@ export class PostController {
       throw new NotFoundException('Статтю не знайдено!');
     }
 
-    await this.postService.addView(post.id, { ip, userAgent });
+    const doc = await this.postService.addView(post.id, { ip, userAgent });
 
-    return new SimplePostEntity(post);
+    return new SimplePostEntity(doc);
+  }
+}
+
+@ApiBadRequestResponse()
+@ApiOkResponse({ type: SimplePostEntity })
+@UseGuards(AccessGuard)
+@Controller('posts/:id/like')
+export class PostLikesController {
+  constructor(private readonly postService: PostService) {}
+
+  @Post('/')
+  async addLikeToComment(@Param('id') id: number, @Req() req: Request): Promise<SimplePostEntity> {
+    const doc = await this.postService.addlike(id, req.user.id);
+
+    return new SimplePostEntity(doc);
   }
 
-  @ApiBadRequestResponse()
-  @ApiOkResponse()
-  @UseGuards(AccessGuard)
-  @Post(':id/like')
-  async addLikeToComment(@Param('id') id: number, @Req() req: Request) {
-    await this.postService.addlike(id, req.user.id);
-
-    return;
-  }
-
-  @ApiBadRequestResponse()
-  @ApiOkResponse()
-  @UseGuards(AccessGuard)
-  @Delete(':id/like')
-  async removelikeFromComment(@Param('id') id: number, @Req() req: Request) {
-    await this.postService.removeLike(id, req.user.id);
-    return;
+  @Delete('/')
+  async removelikeFromComment(@Param('id') id: number, @Req() req: Request): Promise<SimplePostEntity> {
+    const doc = await this.postService.removeLike(id, req.user.id);
+    return new SimplePostEntity(doc);
   }
 }
