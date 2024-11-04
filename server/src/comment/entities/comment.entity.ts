@@ -1,41 +1,13 @@
-import { Exclude, Expose, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { AuthorEntity } from '../../common/entities/author.entity.js';
+import { ReplyEntity } from './reply.entity.js';
+import { Comment } from '../types/comment.type.js';
 
-@Exclude()
-export class CommentEntity {
-  @ApiProperty()
-  @Expose()
-  id: number;
-
-  @ApiProperty()
-  @Expose()
-  parentCommentId: number;
-
-  @ApiProperty()
-  @Expose()
-  content: string;
-
-  @ApiProperty({ type: () => AuthorEntity })
-  @Expose()
-  @Transform(({ obj }) => new AuthorEntity(obj.user))
-  user?: AuthorEntity;
-
+export class CommentEntity extends ReplyEntity {
   @ApiProperty({ type: () => [CommentEntity] })
-  @Expose()
-  @Transform(({ value }) => value?.map((item: CommentEntity) => new CommentEntity(item)))
-  comments?: CommentEntity[];
+  replies?: CommentEntity[];
 
-  @ApiProperty()
-  @Expose()
-  replyCount?: number;
-
-  @ApiProperty()
-  @Expose()
-  @Transform(({ value }) => value?.map((item) => ({ userId: item.userId })))
-  likes?: any[];
-
-  constructor(partial: Partial<CommentEntity>) {
-    Object.assign(this, partial);
+  constructor(comment: Comment) {
+    super(comment);
+    this.replies = comment.comments?.map((item) => new ReplyEntity(item));
   }
 }

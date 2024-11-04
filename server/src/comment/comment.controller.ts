@@ -27,21 +27,22 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiTags,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Request } from 'express';
+import { ApiPaginatedResponse } from '../common/decorators/apiPaginatedResponse.decorator.js';
+import { Pagination } from 'src/common/types/IPagination.type.js';
 
 @ApiTags('comments')
+@ApiBadRequestResponse()
+@ApiNotFoundResponse()
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller('comments')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
-  @ApiBadRequestResponse()
-  @ApiNotFoundResponse()
-  @ApiOkResponse({ type: [CommentEntity] })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Get()
-  async findAll(@Query() query: FilterCommentsDto) {
+  @ApiPaginatedResponse(CommentEntity)
+  @Get('/')
+  async findAll(@Query() query: FilterCommentsDto): Promise<Pagination<CommentEntity>> {
     const data = await this.commentService.findAll(query);
 
     if (!data.data.length) throw new NotFoundException('Коментарів не знайдено!');
@@ -50,41 +51,40 @@ export class CommentController {
       docs: data.data.map((item) => {
         return new CommentEntity(item);
       }),
-      lastPage: data.lastPage,
-      length: data.data.length,
+      totalDocs: data.data.length,
+      totalPages: data.lastPage,
+      currentPage: query.page || 1,
     };
   }
 
-  @ApiBadRequestResponse()
-  @ApiUnauthorizedResponse()
   @ApiNotFoundResponse()
   @ApiCreatedResponse()
   @UseGuards(AccessGuard)
-  @Post()
+  @Post('/')
   async createComment(@Req() req: Request, @Body() body: CreateCommentDto): Promise<CommentEntity> {
-    await this.commentService.create(req.user.id, body);
-    return;
+    const doc = await this.commentService.create(req.user.id, body);
+    return new CommentEntity(doc);
   }
 
-  @ApiBadRequestResponse()
-  @ApiUnauthorizedResponse()
   @ApiNotFoundResponse()
   @ApiForbiddenResponse()
   @ApiBadRequestResponse()
   @ApiOkResponse()
   @UseGuards(AccessGuard)
   @Patch(':id')
-  async updateComment(@Req() req: Request, @Body() body: UpdateCommentDto, @Param('id') id: number) {
+  async updateComment(
+    @Req() req: Request,
+    @Body() body: UpdateCommentDto,
+    @Param('id') id: number,
+  ): Promise<CommentEntity> {
     if (!id) throw new BadRequestException('Такого коментаря не існує!');
 
-    await this.commentService.update(id, req.user.id, body);
-    return;
+    const doc = await this.commentService.update(id, req.user.id, body);
+    return new CommentEntity(doc);
   }
 
-  @ApiUnauthorizedResponse()
   @ApiNotFoundResponse()
   @ApiForbiddenResponse()
-  @ApiBadRequestResponse()
   @ApiOkResponse()
   @UseGuards(AccessGuard)
   @Delete(':id')
@@ -93,24 +93,26 @@ export class CommentController {
 
     return await this.commentService.delete(id, req.user.id);
   }
+}
 
-  @ApiBadRequestResponse()
-  @ApiOkResponse({ type: CommentEntity })
-  @UseGuards(AccessGuard)
+@ApiBadRequestResponse()
+@ApiOkResponse({ type: CommentEntity })
+@UseInterceptors(ClassSerializerInterceptor)
+@UseGuards(AccessGuard)
+@Controller('comments/:id/likes')
+export class CommentLikesController {
+  constructor(private readonly commentService: CommentService) {}
+
   @Post(':id/like')
-  async addLikeToComment(@Param('id') id: number, @Req() req: Request) {
-    await this.commentService.addlike(id, req.user.id);
+  async addLikeToComment(@Param('id') id: number, @Req() req: Request): Promise<CommentEntity> {
+    const doc = await this.commentService.addlike(id, req.user.id);
 
-    return;
+    return new CommentEntity(doc);
   }
 
-  @ApiBadRequestResponse()
-  @ApiOkResponse({ type: CommentEntity })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseGuards(AccessGuard)
   @Delete(':id/like')
-  async removelikeFromComment(@Param('id') id: number, @Req() req: Request) {
-    await this.commentService.removeLike(id, req.user.id);
-    return;
+  async removelikeFromComment(@Param('id') id: number, @Req() req: Request): Promise<CommentEntity> {
+    const doc = await this.commentService.removeLike(id, req.user.id);
+    return new CommentEntity(doc);
   }
 }

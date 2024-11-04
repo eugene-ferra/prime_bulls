@@ -6,6 +6,8 @@ import { UserService } from '../user/user.service.js';
 import { UpdateCommentDto } from './dto/updateComment.dto.js';
 import { FilterCommentsDto } from './dto/filterComment.dto.js';
 import { Prisma } from '@prisma/client';
+import { Comment } from './types/comment.type.js';
+import { PaginatedResult } from 'src/common/types/paginatedResult.type.js';
 
 @Injectable()
 export class CommentService {
@@ -15,13 +17,7 @@ export class CommentService {
     private readonly userService: UserService,
   ) {}
 
-  private _defaultInclude: Prisma.CommentInclude = {
-    comments: { include: { user: true, likes: true } },
-    user: true,
-    likes: true,
-  };
-
-  async findAll(filters: FilterCommentsDto) {
+  async findAll(filters: FilterCommentsDto): Promise<PaginatedResult<Comment>> {
     const where = this.getWhereClause(filters);
     const orderBy = this.getOrderByClause(filters);
     const { skip, take } = this.getPagination(filters);
@@ -29,7 +25,11 @@ export class CommentService {
     const [comments, totalDocs] = await Promise.all([
       await this.prismaService.comment.findMany({
         where,
-        include: this._defaultInclude,
+        include: {
+          comments: { include: { user: true, likes: true } },
+          user: true,
+          likes: true,
+        },
         orderBy,
         skip,
         take,
@@ -38,29 +38,25 @@ export class CommentService {
     ]);
 
     const commentsWithReplyCount = await Promise.all(
-      comments.map(async (comment) => {
-        const repliesWithCount = await Promise.all(
-          comment.comments.map(async (reply) => {
-            const replyCount = await this.prismaService.comment.count({
-              where: { parentCommentId: reply.id },
-            });
-
-            return { ...reply, replyCount };
-          }),
-        );
-
-        return { ...comment, comments: repliesWithCount };
-      }),
+      comments.map(async (comment) => ({
+        ...comment,
+        replyCount: await this.getReplyCount(comment.id),
+        comments: await Promise.all(
+          comment.comments.map(async (reply) => ({
+            ...reply,
+            replyCount: await this.getReplyCount(reply.id),
+          })),
+        ),
+      })),
     );
 
     return {
       data: commentsWithReplyCount,
-      currentPage: filters.page || 1,
       lastPage: Math.ceil(totalDocs / take),
     };
   }
 
-  async create(userId: number, data: CreateCommentDto) {
+  async create(userId: number, data: CreateCommentDto): Promise<Comment> {
     const post = await this.postService.findById(data.postId);
     if (!post) throw new BadRequestException('Статтю не знайдено!');
 
@@ -70,32 +66,58 @@ export class CommentService {
     if (data.parentCommentId && !(await this.findById(data.parentCommentId)))
       throw new BadRequestException('Коментар не знайдено!');
 
-    return this.prismaService.comment.create({ data: { ...data, userId } });
+    const doc = await this.prismaService.comment.create({ data: { ...data, userId } });
+
+    return this.findById(doc.id);
   }
 
-  async update(id: number, userId: number, data: UpdateCommentDto) {
+  async update(id: number, userId: number, data: UpdateCommentDto): Promise<Comment> {
     const comment = await this.findById(id);
     if (!comment) throw new BadRequestException('Коментар не знайдено!');
 
     if (comment.userId !== userId) throw new ForbiddenException('Ви не автор цього коментаря!');
 
-    return this.prismaService.comment.update({ where: { id }, data });
+    const doc = await this.prismaService.comment.update({ where: { id }, data });
+
+    return this.findById(doc.id);
   }
 
-  async delete(id: number, userId: number) {
+  async delete(id: number, userId: number): Promise<void> {
     const comment = await this.findById(id);
     if (!comment) throw new BadRequestException('Коментар не знайдено!');
 
     if (comment.userId !== userId) throw new ForbiddenException('Ви не автор цього коментаря!');
 
-    return this.prismaService.comment.delete({ where: { id } });
+    await this.prismaService.comment.delete({ where: { id } });
   }
 
-  async findById(id: number) {
-    return await this.prismaService.comment.findUnique({ where: { id }, include: this._defaultInclude });
+  async findById(id: number): Promise<Comment> {
+    const doc = await this.prismaService.comment.findUnique({
+      where: { id },
+      include: {
+        comments: { include: { user: true, likes: true } },
+        user: true,
+        likes: true,
+      },
+    });
+
+    if (!doc) throw new BadRequestException('Коментар не знайдено!');
+
+    const docWithReplyCount = {
+      ...doc,
+      replyCount: await this.getReplyCount(doc.id),
+      comments: await Promise.all(
+        doc.comments.map(async (reply) => ({
+          ...reply,
+          replyCount: await this.getReplyCount(reply.id),
+        })),
+      ),
+    };
+
+    return docWithReplyCount;
   }
 
-  async addlike(commentId: number, userId: number) {
+  async addlike(commentId: number, userId: number): Promise<Comment> {
     const comment = await this.findById(commentId);
     if (!comment) throw new BadRequestException('Коментар не знайдено!');
 
@@ -105,10 +127,14 @@ export class CommentService {
     const isLiked = comment.likes.some((like) => like.userId === userId);
 
     if (!isLiked) await this.prismaService.commentLike.create({ data: { commentId, userId } });
+
+    return await this.findById(commentId);
   }
 
-  async removeLike(commentId: number, userId: number) {
+  async removeLike(commentId: number, userId: number): Promise<Comment> {
     await this.prismaService.commentLike.deleteMany({ where: { commentId, userId } });
+
+    return await this.findById(commentId);
   }
 
   private getWhereClause(payload: FilterCommentsDto): Prisma.CommentWhereInput {
@@ -132,5 +158,9 @@ export class CommentService {
     const skip = (page - 1) * limit;
 
     return { skip, take: limit };
+  }
+
+  private async getReplyCount(commentId: number): Promise<number> {
+    return this.prismaService.comment.count({ where: { parentCommentId: commentId } });
   }
 }
