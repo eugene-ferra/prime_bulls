@@ -33,6 +33,10 @@ export class FilterProductsDto extends BaseFilterDto {
   @IsOptional()
   maxPrice?: number;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  isActive?: true;
+
   // TODO: add sorting by rating
 
   @ApiPropertyOptional({ enum: ['basePrice', 'createdAt'] })

@@ -3,7 +3,7 @@ import { CartItemDto } from './dto/cartItem.dto.js';
 import { UpdateCartItemDto } from './dto/updateCartItem.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { UserService } from '../user/user.service.js';
-import { ProductService } from '../product/product.service.js';
+import { ProductService } from '../product/services/product.service.js';
 import { VariantDto } from './dto/variantDto.js';
 import { Cart } from './types/cart.type.js';
 import { CartItem } from './types/cartItem.type.js';
@@ -22,7 +22,7 @@ export class CartService {
     const user = await this.userService.findById(userId);
     if (!user) throw new BadRequestException('Користувача не знайдено!');
 
-    const product = await this.productService.findById(productId);
+    const product = await this.productService.isExists(productId);
     if (!product) throw new BadRequestException('Товар не знайдено!');
 
     if (!(await this.isVariantsValid(variants, productId)))

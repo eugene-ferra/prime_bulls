@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateReviewDto } from './dto/createReview.dto.js';
 import { UpdateReviewDto } from './dto/updateReview.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { ProductService } from '../product/product.service.js';
+import { ProductService } from '../product/services/product.service.js';
 import { UserService } from '../user/user.service.js';
 import { ImageService } from '../file/image.service.js';
 import { FilterReviewDto } from './dto/filterReview.dto.js';
@@ -22,7 +22,7 @@ export class ReviewService {
   private folder = 'reviews';
 
   async create(userId: number, data: CreateReviewDto, files?: Express.Multer.File[]): Promise<Review> {
-    const product = await this.productService.findById(data.productId);
+    const product = await this.productService.isExists(data.productId);
     if (!product) throw new BadRequestException('Товар не знайдено!');
 
     const user = await this.userService.findById(userId);

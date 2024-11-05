@@ -2,16 +2,16 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class ProductVariantEntity {
   @ApiProperty()
-  label: string;
+  readonly label: string;
 
   @ApiProperty()
-  effectType: string;
+  readonly effectType: string;
 
   @ApiProperty()
-  amount: number;
+  readonly amount: number;
 
   @ApiProperty()
-  name: string;
+  readonly name: string;
 
   constructor(data: { name: string; label: string; effectType: string; amount: number }) {
     Object.assign(this, data);

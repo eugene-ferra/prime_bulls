@@ -4,16 +4,16 @@ import { Category } from '../types/category.type.js';
 
 export class CategoryEntity {
   @ApiProperty()
-  id: number;
+  readonly id: number;
 
   @ApiProperty()
-  name: string;
+  readonly name: string;
 
   @ApiProperty()
-  slug: string;
+  readonly slug: string;
 
   @ApiProperty()
-  icon: ImageEntity;
+  readonly icon: ImageEntity;
 
   constructor(data: Category) {
     this.id = data.id;

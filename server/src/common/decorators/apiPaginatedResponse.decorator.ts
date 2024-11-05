@@ -8,19 +8,26 @@ export function ApiPaginatedResponse<TModel extends Function>(model: TModel) {
     ApiResponse({
       status: 200,
       schema: {
-        allOf: [
-          {
-            $ref: getSchemaPath(Pagination),
+        properties: {
+          status: {
+            type: 'number',
           },
-          {
-            properties: {
-              docs: {
-                type: 'array',
-                items: { $ref: getSchemaPath(model) },
+          body: {
+            allOf: [
+              {
+                $ref: getSchemaPath(Pagination),
               },
-            },
+              {
+                properties: {
+                  docs: {
+                    type: 'array',
+                    items: { $ref: getSchemaPath(model) },
+                  },
+                },
+              },
+            ],
           },
-        ],
+        },
       },
     }),
   );

@@ -8,7 +8,7 @@ import { ImageService } from '../file/image.service.js';
 import slugify from 'slugify';
 import { UserAddressDto } from './dto/userAddress.dto.js';
 import { UpdateUserAddressDto } from './dto/updateUserAddress.dto.js';
-import { ProductService } from '../product/product.service.js';
+import { ProductService } from '../product/services/product.service.js';
 import crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { User } from './types/user.type.js';
@@ -190,7 +190,7 @@ export class UserService {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('Користувача не знайдено!');
 
-    const product = await this.productService.findById(productId);
+    const product = await this.productService.isExists(productId);
     if (!product) throw new NotFoundException('Товар не знайдено!');
 
     const isAdded = await this.prisma.savedProduct.findUnique({
@@ -207,7 +207,7 @@ export class UserService {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('Користувача не знайдено!');
 
-    const product = await this.productService.findById(productId);
+    const product = await this.productService.isExists(productId);
     if (!product) throw new NotFoundException('Товар не знайдено!');
 
     await this.prisma.savedProduct.delete({ where: { userId_productId: { userId, productId } } });

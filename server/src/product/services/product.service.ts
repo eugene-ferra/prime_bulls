@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import { Prisma } from '@prisma/client';
-import { FilterProductsDto } from './dto/filterProducts.dto.js';
+import { FilterProductsDto } from '../dto/filterProducts.dto.js';
 import { PaginatedResult } from 'src/common/types/paginatedResult.type.js';
-import { SimpleProduct } from './types/SimpleProduct.type.js';
-import { ExpandedProduct } from './types/expandedProduct.type.js';
+import { SimpleProduct } from '../types/SimpleProduct.type.js';
+import { ExpandedProduct } from '../types/expandedProduct.type.js';
 
 @Injectable()
 export class ProductService {
@@ -18,7 +18,7 @@ export class ProductService {
 
     const [products, totalDocs] = await Promise.all([
       this.prisma.product.findMany({ where, orderBy, skip, take, include }),
-      this.countDocs(where),
+      this.prisma.product.count({ where }),
     ]);
 
     if (!products.length) return { data: [], lastPage: 1 };
@@ -36,9 +36,13 @@ export class ProductService {
     };
   }
 
-  async findById(id: number): Promise<ExpandedProduct> {
+  async isExists(id: number): Promise<boolean> {
+    return !!(await this.prisma.product.findFirst({ where: { id } }));
+  }
+
+  async findOne(slug: string): Promise<ExpandedProduct> {
     const doc = await this.prisma.product.findUnique({
-      where: { id },
+      where: { slug: slug },
       include: {
         category: true,
         images: true,
@@ -57,28 +61,7 @@ export class ProductService {
     return { ...doc, reviewCount, avgReview };
   }
 
-  async findBySlug(slug: string): Promise<ExpandedProduct> {
-    const doc = await this.prisma.product.findUnique({
-      where: { slug },
-      include: {
-        category: true,
-        images: true,
-        attributes: {
-          include: { attribute: true },
-        },
-        productVariants: {
-          include: { variant: true },
-        },
-      },
-    });
-
-    if (!doc) return null;
-
-    const { reviewCount, avgReview } = await this.aggregateReviewData(doc.id);
-    return { ...doc, reviewCount, avgReview };
-  }
-
-  async aggregateReviewData(productId: number): Promise<{ reviewCount: number; avgReview: number }> {
+  private async aggregateReviewData(productId: number): Promise<{ reviewCount: number; avgReview: number }> {
     const reviewAggregation = await this.prisma.review.aggregate({
       where: { AND: [{ isModerated: true }, { productId: productId }] },
       _avg: { rating: true },
@@ -86,10 +69,6 @@ export class ProductService {
     });
 
     return { reviewCount: reviewAggregation._count, avgReview: reviewAggregation._avg.rating };
-  }
-
-  private async countDocs(where: Prisma.ProductWhereInput) {
-    return await this.prisma.product.count({ where });
   }
 
   private getWhereClause(payload: FilterProductsDto): Prisma.ProductWhereInput {
@@ -101,7 +80,7 @@ export class ProductService {
     if (payload.categoryId) where.categoryId = payload.categoryId;
     if (payload.minPrice) where.basePrice = { gte: payload.minPrice };
     if (payload.maxPrice) where.basePrice = { lte: payload.maxPrice };
-    where.isActive = true;
+    if (payload.isActive) where.isActive = payload.isActive;
 
     return where;
   }

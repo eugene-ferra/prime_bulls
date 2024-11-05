@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
+  app.setGlobalPrefix('api/v1');
 
   const config = new DocumentBuilder().setTitle('Prime Bulls API').setVersion('1.0').build();
   const document = SwaggerModule.createDocument(app, config, { deepScanRoutes: true });
