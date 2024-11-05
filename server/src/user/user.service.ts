@@ -11,6 +11,7 @@ import { UpdateUserAddressDto } from './dto/updateUserAddress.dto.js';
 import { ProductService } from '../product/product.service.js';
 import crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
+import { User } from './types/user.type.js';
 
 @Injectable()
 export class UserService {
@@ -23,34 +24,73 @@ export class UserService {
 
   private folder = 'users';
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const isExist = await this.findByEmail(createUserDto.email);
     if (isExist) throw new ConflictException('Користувач з такою поштою вже існує!');
 
     const hashedPassword = await this.hashPassword(createUserDto.password);
 
-    return await this.prisma.user.create({
+    const doc = await this.prisma.user.create({
       data: { ...createUserDto, password: hashedPassword, role: 'USER' },
+    });
+
+    return await this.findById(doc.id);
+  }
+
+  async findByEmail(email: string): Promise<User> {
+    return await this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        reviews: true,
+        comments: true,
+        commentLikes: true,
+        reviewLikes: true,
+        postLikes: true,
+        addresses: true,
+        savedProducts: true,
+      },
     });
   }
 
-  async findByEmail(email: string) {
-    return await this.prisma.user.findUnique({ where: { email } });
+  async findByPhone(phone: string): Promise<User> {
+    return await this.prisma.user.findUnique({
+      where: { phone },
+      include: {
+        reviews: true,
+        comments: true,
+        commentLikes: true,
+        reviewLikes: true,
+        postLikes: true,
+        addresses: true,
+        savedProducts: true,
+      },
+    });
   }
 
-  async findByPhone(phone: string) {
-    return await this.prisma.user.findUnique({ where: { phone } });
+  async findById(id: number): Promise<User> {
+    return await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        reviews: true,
+        comments: true,
+        commentLikes: true,
+        reviewLikes: true,
+        postLikes: true,
+        addresses: true,
+        savedProducts: true,
+      },
+    });
   }
 
-  async findById(id: number) {
-    return await this.prisma.user.findUnique({ where: { id } });
+  async updateInfo(id: number, info: UpdateUserInfoDto): Promise<User> {
+    const doc = await this.prisma.user.update({ where: { id }, data: info });
+
+    if (!doc) throw new NotFoundException('Користувача не знайдено!');
+
+    return await this.findById(doc.id);
   }
 
-  async updateInfo(id: number, info: UpdateUserInfoDto) {
-    return await this.prisma.user.update({ where: { id }, data: info });
-  }
-
-  async updatePassword(id: number, info: UpdateUserPasswordDto) {
+  async updatePassword(id: number, info: UpdateUserPasswordDto): Promise<User> {
     const { newPassword, oldPassword, newPasswordConfirm } = info;
     const user = await this.findById(id);
 
@@ -60,10 +100,12 @@ export class UserService {
       throw new BadRequestException('Старий пароль вказано невірно!');
 
     const newHashedPassword = await this.hashPassword(newPassword);
-    return await this.prisma.user.update({ where: { id }, data: { password: newHashedPassword } });
+    const doc = await this.prisma.user.update({ where: { id }, data: { password: newHashedPassword } });
+
+    return await this.findById(doc.id);
   }
 
-  async hashPassword(password: string) {
+  async hashPassword(password: string): Promise<string> {
     const salt = await bcrypt.genSalt();
 
     return await bcrypt.hash(password, salt);
@@ -73,11 +115,11 @@ export class UserService {
     return await bcrypt.compare(testPassword, hashedPassword);
   }
 
-  async delete(id: number) {
-    return await this.prisma.user.delete({ where: { id } });
+  async delete(id: number): Promise<void> {
+    await this.prisma.user.delete({ where: { id } });
   }
 
-  async updateAvatar(id: number, file: Express.Multer.File) {
+  async updateAvatar(id: number, file: Express.Multer.File): Promise<User> {
     const user = await this.findById(id);
 
     if (!user) throw new NotFoundException('Користувача не знайдено!');
@@ -93,13 +135,15 @@ export class UserService {
       fit: 'cover',
     });
 
-    return await this.prisma.user.update({
+    const doc = await this.prisma.user.update({
       where: { id },
       data: { imageUrl: savedImage.url, mimeType: savedImage.mime, altText: savedImageName },
     });
+
+    return await this.findById(doc.id);
   }
 
-  async deleteAvatar(id: number) {
+  async deleteAvatar(id: number): Promise<User> {
     const user = await this.findById(id);
 
     if (!user) throw new NotFoundException('Користувача не знайдено!');
@@ -108,13 +152,15 @@ export class UserService {
       await this.minioService.deleteImage(this.folder, user.imageUrl);
     }
 
-    return await this.prisma.user.update({
+    const doc = await this.prisma.user.update({
       where: { id },
       data: { imageUrl: null, mimeType: null, altText: null },
     });
+
+    return await this.findById(doc.id);
   }
 
-  async addAddress(id: number, address: UserAddressDto) {
+  async addAddress(id: number, address: UserAddressDto): Promise<User> {
     const user = await this.findById(id);
 
     if (!user) throw new NotFoundException('Користувача не знайдено!');
@@ -124,7 +170,7 @@ export class UserService {
     return await this.findById(id);
   }
 
-  async updateAddress(userId: number, addressId: number, address: UpdateUserAddressDto) {
+  async updateAddress(userId: number, addressId: number, address: UpdateUserAddressDto): Promise<User> {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('Користувача не знайдено!');
 
@@ -132,7 +178,7 @@ export class UserService {
     return await this.findById(userId);
   }
 
-  async deleteAddress(userId: number, addressId: number) {
+  async deleteAddress(userId: number, addressId: number): Promise<User> {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('Користувача не знайдено!');
 
@@ -140,7 +186,7 @@ export class UserService {
     return await this.findById(userId);
   }
 
-  async addFavorite(userId: number, productId: number) {
+  async addFavorite(userId: number, productId: number): Promise<User> {
     const user = await this.findById(userId);
     if (!user) throw new NotFoundException('Користувача не знайдено!');
 

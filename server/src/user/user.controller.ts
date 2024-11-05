@@ -4,7 +4,6 @@ import {
   UseGuards,
   Req,
   UseInterceptors,
-  ClassSerializerInterceptor,
   Patch,
   Body,
   Delete,
@@ -36,14 +35,13 @@ import { UserAddressDto } from './dto/userAddress.dto.js';
 import { UpdateUserAddressDto } from './dto/updateUserAddress.dto.js';
 
 @ApiTags('users')
+@UseGuards(AccessGuard)
+@ApiUnauthorizedResponse()
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
-  @ApiUnauthorizedResponse()
-  @UseGuards(AccessGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
+  @ApiOkResponse({ type: UserEntity })
   @Get('/me')
   async getMe(@Req() req: Request): Promise<UserEntity> {
     const user = await this.userService.findById(req.user.id);
@@ -51,11 +49,8 @@ export class UserController {
     return new UserEntity(user);
   }
 
-  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
-  @ApiUnauthorizedResponse()
+  @ApiOkResponse({ type: UserEntity })
   @ApiBadRequestResponse()
-  @UseGuards(AccessGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @Patch('/me/password')
   async changePassword(@Req() req: Request, @Body() body: UpdateUserPasswordDto): Promise<UserEntity> {
     const user = await this.userService.updatePassword(req.user.id, body);
@@ -63,11 +58,8 @@ export class UserController {
     return new UserEntity(user);
   }
 
-  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
-  @ApiUnauthorizedResponse()
+  @ApiOkResponse({ type: UserEntity })
   @ApiBadRequestResponse()
-  @UseGuards(AccessGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @Patch('/me/info')
   async changeInfo(@Req() req: Request, @Body() body: UpdateUserInfoDto): Promise<UserEntity> {
     const user = await this.userService.updateInfo(req.user.id, body);
@@ -75,8 +67,7 @@ export class UserController {
     return new UserEntity(user);
   }
 
-  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
-  @ApiUnauthorizedResponse()
+  @ApiOkResponse({ type: UserEntity })
   @ApiBadRequestResponse()
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -90,8 +81,7 @@ export class UserController {
       },
     },
   })
-  @UseGuards(AccessGuard)
-  @UseInterceptors(FileInterceptor('file'), ClassSerializerInterceptor)
+  @UseInterceptors(FileInterceptor('file'))
   @Patch('/me/avatar')
   async changeAvatar(
     @UploadedFile(
@@ -121,11 +111,8 @@ export class UserController {
       },
     },
   })
-  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
-  @ApiUnauthorizedResponse()
+  @ApiOkResponse({ type: UserEntity })
   @ApiBadRequestResponse()
-  @UseGuards(AccessGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @Delete('/me/avatar')
   async deleteAvatar(@Req() req: Request): Promise<UserEntity> {
     const user = await this.userService.deleteAvatar(req.user.id);
@@ -133,11 +120,8 @@ export class UserController {
     return new UserEntity(user);
   }
 
-  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
-  @ApiUnauthorizedResponse()
+  @ApiOkResponse({ type: UserEntity })
   @ApiBadRequestResponse()
-  @UseGuards(AccessGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @Post('/me/address')
   async addAddress(@Req() req: Request, @Body() body: UserAddressDto): Promise<UserEntity> {
     const user = await this.userService.addAddress(req.user.id, body);
@@ -145,11 +129,8 @@ export class UserController {
     return new UserEntity(user);
   }
 
-  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
-  @ApiUnauthorizedResponse()
+  @ApiOkResponse({ type: UserEntity })
   @ApiBadRequestResponse()
-  @UseGuards(AccessGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @Patch('/me/address/:addressId')
   async updateAddress(
     @Req() req: Request,
@@ -163,11 +144,8 @@ export class UserController {
     return new UserEntity(user);
   }
 
-  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
-  @ApiUnauthorizedResponse()
+  @ApiOkResponse({ type: UserEntity })
   @ApiBadRequestResponse()
-  @UseGuards(AccessGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @Delete('/me/address/:addressId')
   async deleteAddress(@Req() req: Request, @Param('id') addressId: number): Promise<UserEntity> {
     if (!addressId) throw new BadRequestException('Не корректна адреса!');
@@ -177,12 +155,9 @@ export class UserController {
     return new UserEntity(user);
   }
 
-  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
-  @ApiUnauthorizedResponse()
+  @ApiOkResponse({ type: UserEntity })
   @ApiBadRequestResponse()
   @ApiConflictResponse()
-  @UseGuards(AccessGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @Post('/me/favorite/:productId')
   async addFavorite(@Req() req: Request, @Param('productId') productId: number): Promise<UserEntity> {
     if (!productId) throw new BadRequestException('Не корректний товар!');
@@ -192,12 +167,9 @@ export class UserController {
     return new UserEntity(user);
   }
 
-  @ApiOkResponse({ type: UserEntity, description: 'returns user info' })
-  @ApiUnauthorizedResponse()
+  @ApiOkResponse({ type: UserEntity })
   @ApiBadRequestResponse()
   @ApiConflictResponse()
-  @UseGuards(AccessGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @Delete('/me/favorite/:productId')
   async removeFavorite(@Req() req: Request, @Param('productId') productId: number): Promise<UserEntity> {
     if (!productId) throw new BadRequestException('Не корректний товар!');
@@ -208,9 +180,6 @@ export class UserController {
   }
 
   @ApiOkResponse()
-  @ApiUnauthorizedResponse()
-  @UseGuards(AccessGuard)
-  @UseInterceptors(ClassSerializerInterceptor)
   @Delete('/me')
   async deleteMe(@Req() req: Request): Promise<UserEntity> {
     await this.userService.delete(req.user.id);
