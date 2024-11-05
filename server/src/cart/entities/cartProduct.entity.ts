@@ -2,44 +2,38 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { ImageEntity } from '../../common/entities/image.entity.js';
 import { CartProductVariantEntity } from './cartProductVariant.entity.js';
+import { CartProduct } from '../types/cartProduct.type.js';
 
 @Exclude()
 export class CartProductEntity {
   @ApiProperty()
-  @Expose()
   id: number;
 
   @ApiProperty()
-  @Expose()
   title: string;
 
   @ApiProperty()
-  @Expose()
   slug: string;
 
   @ApiProperty()
-  @Expose()
-  subtitle: string;
-
-  @ApiProperty()
-  @Expose()
   basePrice: number;
 
   @ApiProperty()
-  @Expose()
   salePercent: number;
 
-  @ApiProperty({ type: () => ImageEntity })
-  @Expose()
-  @Transform(({ obj }) => new ImageEntity({ url: obj.coverImageUrl, altText: obj.coverImageAltText }))
-  coverImage?: ImageEntity;
+  @ApiProperty({ type: ImageEntity })
+  coverImage: ImageEntity;
 
-  @ApiProperty({ type: () => [CartProductVariantEntity] })
-  @Expose()
-  @Transform(({ value }) => value.map((item: CartProductVariantEntity) => new CartProductVariantEntity(item)))
-  productVariants?: CartProductVariantEntity[];
+  @ApiProperty()
+  productVariants: CartProductVariantEntity[];
 
-  constructor(partial: Partial<CartProductEntity>) {
-    Object.assign(this, partial);
+  constructor(data: CartProduct) {
+    this.id = data.id;
+    this.title = data.title;
+    this.slug = data.slug;
+    this.basePrice = data.basePrice;
+    this.salePercent = data.salePercent;
+    this.coverImage = new ImageEntity({ url: data.coverImageUrl, altText: data.coverImageAltText });
+    this.productVariants = data.productVariants?.map((variant) => new CartProductVariantEntity(variant));
   }
 }

@@ -5,6 +5,8 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { UserService } from '../user/user.service.js';
 import { ProductService } from '../product/product.service.js';
 import { VariantDto } from './dto/variantDto.js';
+import { Cart } from './types/cart.type.js';
+import { CartItem } from './types/cartItem.type.js';
 
 @Injectable()
 export class CartService {
@@ -14,7 +16,7 @@ export class CartService {
     private productService: ProductService,
   ) {}
 
-  async addItem(userId: number, createCartDto: CartItemDto) {
+  async addItem(userId: number, createCartDto: CartItemDto): Promise<Cart> {
     const { productId, quantity, variants } = createCartDto;
 
     const user = await this.userService.findById(userId);
@@ -49,7 +51,7 @@ export class CartService {
     return await this.find(userId);
   }
 
-  async find(userId: number) {
+  async find(userId: number): Promise<Cart> {
     const cartItems = await this.prisma.cartItem.findMany({
       where: { userId },
       include: {
@@ -58,7 +60,7 @@ export class CartService {
       },
     });
 
-    const cartItemsWithPrices = cartItems.map((item) => {
+    const cartItemsWithPrices: CartItem[] = cartItems.map((item) => {
       let itemPrice = item.product.basePrice;
       let itemSalePercent = item.product.salePercent || 0;
 
@@ -87,19 +89,19 @@ export class CartService {
 
       return {
         ...item,
-        newPrice,
+        actualPrice: newPrice,
         oldPrice: itemPrice,
       };
     });
 
     return {
       items: cartItemsWithPrices,
-      newTotalSum: cartItemsWithPrices.reduce((acc, item) => acc + item.newPrice * item.quantity, 0),
-      oldTotalSum: cartItemsWithPrices.reduce((acc, item) => acc + item.oldPrice * item.quantity, 0),
+      actualSum: cartItemsWithPrices.reduce((acc, item) => acc + item.actualPrice * item.quantity, 0),
+      oldSum: cartItemsWithPrices.reduce((acc, item) => acc + item.oldPrice * item.quantity, 0),
     };
   }
 
-  async updateItem(userId: number, productId: number, updateCartDto: UpdateCartItemDto) {
+  async updateItem(userId: number, productId: number, updateCartDto: UpdateCartItemDto): Promise<Cart> {
     const { variants, quantity } = updateCartDto;
 
     const currentCart = await this.prisma.cartItem.findUnique({
@@ -128,13 +130,13 @@ export class CartService {
     return await this.find(userId);
   }
 
-  async removeItem(userId: number, productId: number) {
+  async removeItem(userId: number, productId: number): Promise<Cart> {
     await this.prisma.cartItem.delete({ where: { productId_userId: { userId, productId } } });
 
     return await this.find(userId);
   }
 
-  async clearCart(userId: number) {
+  async clearCart(userId: number): Promise<Cart> {
     await this.prisma.cartItem.deleteMany({ where: { userId } });
 
     return await this.find(userId);

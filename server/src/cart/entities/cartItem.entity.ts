@@ -1,35 +1,35 @@
-import { Exclude, Expose, Transform } from 'class-transformer';
-import { CartProductEntity } from './cartProduct.entity.js';
 import { ApiProperty } from '@nestjs/swagger';
+import { CartItem } from '../types/cartItem.type.js';
+import { CartProductEntity } from './cartProduct.entity.js';
 import { CartProductVariantEntity } from './cartProductVariant.entity.js';
-import { CartVariantEntity } from './cartVariant.entity.js';
+import { CartSelectedVariant } from '../types/cartSelectedVariant.type.js';
+import { CartSelectedVariantEntity } from './cartSelectedVariant.entity.js';
 
-@Exclude()
 export class CartItemEntity {
-  @Expose()
+  @ApiProperty()
   id: number;
 
-  @Expose()
+  @ApiProperty()
   quantity: number;
 
-  @Expose()
-  @Transform(({ obj }) => new CartProductEntity(obj.product))
-  product?: CartProductEntity;
-
-  @ApiProperty({ type: () => [CartVariantEntity] })
-  @Expose()
-  @Transform(({ value }) => value.map((item) => new CartVariantEntity(item)))
-  cartItemVariants?: any[];
+  @ApiProperty()
+  product: CartProductEntity;
 
   @ApiProperty()
-  @Expose()
+  selectedVariants: CartSelectedVariantEntity[];
+
+  @ApiProperty()
   newPrice: number;
 
   @ApiProperty()
-  @Expose()
-  oldPrice?: number;
+  oldPrice: number;
 
-  constructor(partial: Partial<CartItemEntity>) {
-    Object.assign(this, partial);
+  constructor(data: CartItem) {
+    this.id = data.id;
+    this.quantity = data.quantity;
+    this.newPrice = data.actualPrice;
+    this.oldPrice = data.oldPrice;
+    this.product = new CartProductEntity(data.product);
+    this.selectedVariants = data.cartItemVariants.map((variant) => new CartSelectedVariantEntity(variant));
   }
 }
