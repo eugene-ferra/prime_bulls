@@ -18,8 +18,8 @@ export class FilterReviewDto extends BaseFilterDto {
   @IsNumber()
   parentReviewId?: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, default: true })
   @IsOptional()
   @IsBoolean()
-  isModerated?: boolean;
+  isModerated?: boolean = true;
 }

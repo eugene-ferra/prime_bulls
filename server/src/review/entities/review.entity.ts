@@ -3,8 +3,8 @@ import { ReplyEntity } from './reply.entity.js';
 import { Review } from '../types/review.type.js';
 
 export class ReviewEntity extends ReplyEntity {
-  @ApiProperty()
-  replies: ReplyEntity[];
+  @ApiProperty({ type: [ReplyEntity] })
+  readonly replies: ReplyEntity[];
 
   constructor(review: Review) {
     super(review);

@@ -1,27 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
 import { ImageEntity } from './image.entity.js';
 
-@Exclude()
 export class AuthorEntity {
   @ApiProperty()
-  @Expose()
   id: number;
 
   @ApiProperty()
-  @Expose()
   name: string;
 
   @ApiPropertyOptional()
-  @Expose()
   lastName?: string;
 
   @ApiProperty({ type: () => ImageEntity })
-  @Expose()
-  @Transform(({ obj }) => new ImageEntity({ url: obj.imageUrl, altText: obj.altText }))
   coverImage?: ImageEntity;
 
-  constructor(partial: Partial<AuthorEntity>) {
-    Object.assign(this, partial);
+  constructor(data: { id: number; name: string; lastName?: string; imageUrl: string; altText: string }) {
+    this.id = data.id;
+    this.name = data.name;
+    this.lastName = data.lastName;
+    this.coverImage = new ImageEntity({ url: data.imageUrl, altText: data.altText });
   }
 }

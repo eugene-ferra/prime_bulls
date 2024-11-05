@@ -7,7 +7,6 @@ import { ApiBadRequestResponse, ApiNotFoundResponse, ApiTags } from '@nestjs/swa
 
 @ApiTags('categories')
 @ApiPaginatedResponse(CategoryEntity)
-@ApiBadRequestResponse()
 @ApiNotFoundResponse()
 @Controller('/categories')
 export class CategoryController {

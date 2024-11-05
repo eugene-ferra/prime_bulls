@@ -24,6 +24,11 @@ export class UserService {
 
   private folder = 'users';
 
+  async isExists(id: number): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    return !!user;
+  }
+
   async create(createUserDto: CreateUserDto): Promise<User> {
     const isExist = await this.findByEmail(createUserDto.email);
     if (isExist) throw new ConflictException('Користувач з такою поштою вже існує!');

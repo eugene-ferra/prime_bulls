@@ -5,28 +5,28 @@ import { Reply } from '../types/reply.type.js';
 
 export class ReplyEntity {
   @ApiProperty()
-  id: number;
+  readonly id: number;
 
   @ApiProperty()
-  parentReviewId: number;
+  readonly parentReviewId: number;
 
   @ApiProperty()
-  comment: string;
+  readonly comment: string;
 
   @ApiProperty()
-  rating: number;
+  readonly rating: number;
 
   @ApiProperty({ type: AuthorEntity })
-  user: AuthorEntity;
+  readonly user: AuthorEntity;
 
   @ApiProperty({ type: [ImageEntity] })
-  images: ImageEntity[];
+  readonly images: ImageEntity[];
 
   @ApiProperty()
-  replyCount: number;
+  readonly replyCount: number;
 
   @ApiProperty()
-  likes: number;
+  readonly likes: number;
 
   constructor(review: Reply) {
     this.id = review.id;

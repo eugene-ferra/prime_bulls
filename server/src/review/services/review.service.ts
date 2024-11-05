@@ -1,54 +1,34 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateReviewDto } from './dto/createReview.dto.js';
-import { UpdateReviewDto } from './dto/updateReview.dto.js';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { ProductService } from '../product/services/product.service.js';
-import { UserService } from '../user/user.service.js';
-import { ImageService } from '../file/image.service.js';
-import { FilterReviewDto } from './dto/filterReview.dto.js';
+import { CreateReviewDto } from '../dto/createReview.dto.js';
+import { UpdateReviewDto } from '../dto/updateReview.dto.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { ProductService } from '../../product/services/product.service.js';
+import { UserService } from '../../user/user.service.js';
+import { FilterReviewDto } from '../dto/filterReview.dto.js';
 import { Prisma } from '@prisma/client';
-import { Review } from './types/review.type.js';
-import { PaginatedResult } from 'src/common/types/paginatedResult.type.js';
+import { Review } from '../types/review.type.js';
+import { PaginatedResult } from '../../common/types/paginatedResult.type.js';
+import { ReviewLikeService } from './reviewLike.service.js';
+import { ReviewImageService } from './reviewImage.service.js';
 
 @Injectable()
 export class ReviewService {
   constructor(
     private readonly prismaService: PrismaService,
+    private readonly reviewLikeService: ReviewLikeService,
     private readonly productService: ProductService,
     private readonly userService: UserService,
-    private readonly imageService: ImageService,
+    private readonly reviewImageService: ReviewImageService,
   ) {}
 
-  private folder = 'reviews';
-
   async create(userId: number, data: CreateReviewDto, files?: Express.Multer.File[]): Promise<Review> {
-    const product = await this.productService.isExists(data.productId);
-    if (!product) throw new BadRequestException('Товар не знайдено!');
+    if (!(await this.productService.isExists(data.productId)))
+      throw new BadRequestException('Товар не знайдено!');
 
-    const user = await this.userService.findById(userId);
-    if (!user) throw new BadRequestException('Користувача не знайдено!');
+    if (!(await this.userService.isExists(userId))) throw new BadRequestException('Користувача не знайдено!');
 
     const review = await this.prismaService.review.create({ data: { ...data, userId } });
-
-    if (files?.length) {
-      const images = await Promise.all(
-        files.map((file) =>
-          this.imageService.saveImage(file, this.folder, review.id, file.originalname, {
-            width: 800,
-            fit: 'contain',
-          }),
-        ),
-      );
-
-      await this.prismaService.reviewImage.createMany({
-        data: images.map((image, i) => ({
-          reviewId: review.id,
-          url: image.url,
-          mimeType: image.mime,
-          altText: `${review.id}-${i}`,
-        })),
-      });
-    }
+    if (files) await this.reviewImageService.saveImages(files, review.id);
 
     return await this.findById(review.id);
   }
@@ -59,12 +39,7 @@ export class ReviewService {
 
     if (review.userId !== userId) throw new BadRequestException('Ви не маєте права видаляти цей відгук!');
 
-    if (review.images.length) {
-      await Promise.all([
-        review.images.map((image) => this.imageService.deleteImage(this.folder, image.url)),
-        this.prismaService.reviewImage.deleteMany({ where: { reviewId: id } }),
-      ]);
-    }
+    await this.reviewImageService.removeImages(review);
     await this.prismaService.review.delete({ where: { id } });
   }
 
@@ -81,31 +56,9 @@ export class ReviewService {
 
     await this.prismaService.review.update({ where: { id }, data });
 
-    if (files?.length) {
-      if (review.images.length) {
-        await Promise.all([
-          review.images.map((image) => this.imageService.deleteImage(this.folder, image.url)),
-          this.prismaService.reviewImage.deleteMany({ where: { reviewId: id } }),
-        ]);
-      }
-
-      const images = await Promise.all(
-        files.map((file) =>
-          this.imageService.saveImage(file, this.folder, id, file.originalname, {
-            width: 800,
-            fit: 'contain',
-          }),
-        ),
-      );
-
-      await this.prismaService.reviewImage.createMany({
-        data: images.map((image, i) => ({
-          reviewId: id,
-          url: image.url,
-          mimeType: image.mime,
-          altText: `${id}-${i}`,
-        })),
-      });
+    if (files.length) {
+      await this.reviewImageService.removeImages(review);
+      await this.reviewImageService.saveImages(files, id);
     }
 
     return await this.findById(id);
@@ -182,18 +135,13 @@ export class ReviewService {
     const review = await this.findById(reviewId);
     if (!review) throw new BadRequestException('Відгук не знайдено!');
 
-    const user = await this.userService.findById(userId);
-    if (!user) throw new BadRequestException('Користувача не знайдено!');
-
-    const isLiked = review.likes.some((like) => like.userId === userId);
-
-    if (!isLiked) await this.prismaService.reviewLike.create({ data: { reviewId, userId } });
+    await this.reviewLikeService.addlike(review, userId);
 
     return await this.findById(reviewId);
   }
 
   async removeLike(reviewId: number, userId: number): Promise<Review> {
-    await this.prismaService.reviewLike.deleteMany({ where: { reviewId, userId } });
+    await this.reviewLikeService.removeLike(reviewId, userId);
 
     return await this.findById(reviewId);
   }
