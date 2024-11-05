@@ -1,13 +1,13 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { CreateCommentDto } from './dto/createComment.dto.js';
-import { PostService } from '../post/services/post.service.js';
-import { UserService } from '../user/user.service.js';
-import { UpdateCommentDto } from './dto/updateComment.dto.js';
-import { FilterCommentsDto } from './dto/filterComment.dto.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { CreateCommentDto } from '../dto/createComment.dto.js';
+import { PostService } from '../../post/services/post.service.js';
+import { UserService } from '../../user/user.service.js';
+import { UpdateCommentDto } from '../dto/updateComment.dto.js';
+import { FilterCommentsDto } from '../dto/filterComment.dto.js';
 import { Prisma } from '@prisma/client';
-import { Comment } from './types/comment.type.js';
-import { PaginatedResult } from 'src/common/types/paginatedResult.type.js';
+import { Comment } from '../types/comment.type.js';
+import { PaginatedResult } from '../../common/types/paginatedResult.type.js';
 
 @Injectable()
 export class CommentService {
@@ -56,14 +56,14 @@ export class CommentService {
     };
   }
 
+  async isExists(id: number): Promise<boolean> {
+    return !!(await this.prismaService.comment.findUnique({ where: { id } }));
+  }
+
   async create(userId: number, data: CreateCommentDto): Promise<Comment> {
-    const post = await this.postService.findById(data.postId);
-    if (!post) throw new BadRequestException('Статтю не знайдено!');
-
-    const user = await this.userService.findById(userId);
-    if (!user) throw new BadRequestException('Користувача не знайдено!');
-
-    if (data.parentCommentId && !(await this.findById(data.parentCommentId)))
+    if (!(await this.postService.isExist(data.postId))) throw new BadRequestException('Статтю не знайдено!');
+    if (!(await this.userService.isExists(userId))) throw new BadRequestException('Користувача не знайдено!');
+    if (data.parentCommentId && !(await this.isExists(data.parentCommentId)))
       throw new BadRequestException('Коментар не знайдено!');
 
     const doc = await this.prismaService.comment.create({ data: { ...data, userId } });
@@ -73,8 +73,8 @@ export class CommentService {
 
   async update(id: number, userId: number, data: UpdateCommentDto): Promise<Comment> {
     const comment = await this.findById(id);
-    if (!comment) throw new BadRequestException('Коментар не знайдено!');
 
+    if (!comment) throw new BadRequestException('Коментар не знайдено!');
     if (comment.userId !== userId) throw new ForbiddenException('Ви не автор цього коментаря!');
 
     const doc = await this.prismaService.comment.update({ where: { id }, data });
@@ -84,8 +84,8 @@ export class CommentService {
 
   async delete(id: number, userId: number): Promise<void> {
     const comment = await this.findById(id);
-    if (!comment) throw new BadRequestException('Коментар не знайдено!');
 
+    if (!comment) throw new BadRequestException('Коментар не знайдено!');
     if (comment.userId !== userId) throw new ForbiddenException('Ви не автор цього коментаря!');
 
     await this.prismaService.comment.delete({ where: { id } });
@@ -101,7 +101,7 @@ export class CommentService {
       },
     });
 
-    if (!doc) throw new BadRequestException('Коментар не знайдено!');
+    if (!doc) return null;
 
     const docWithReplyCount = {
       ...doc,
@@ -115,26 +115,6 @@ export class CommentService {
     };
 
     return docWithReplyCount;
-  }
-
-  async addlike(commentId: number, userId: number): Promise<Comment> {
-    const comment = await this.findById(commentId);
-    if (!comment) throw new BadRequestException('Коментар не знайдено!');
-
-    const user = await this.userService.findById(userId);
-    if (!user) throw new BadRequestException('Користувача не знайдено!');
-
-    const isLiked = comment.likes.some((like) => like.userId === userId);
-
-    if (!isLiked) await this.prismaService.commentLike.create({ data: { commentId, userId } });
-
-    return await this.findById(commentId);
-  }
-
-  async removeLike(commentId: number, userId: number): Promise<Comment> {
-    await this.prismaService.commentLike.deleteMany({ where: { commentId, userId } });
-
-    return await this.findById(commentId);
   }
 
   private getWhereClause(payload: FilterCommentsDto): Prisma.CommentWhereInput {

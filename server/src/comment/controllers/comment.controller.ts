@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Body,
-  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
@@ -12,34 +11,32 @@ import {
   Query,
   Req,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
-import { CommentService } from './comment.service.js';
-import { AccessGuard } from '../common/guards/access.guard.js';
-import { CreateCommentDto } from './dto/createComment.dto.js';
-import { UpdateCommentDto } from './dto/updateComment.dto.js';
-import { FilterCommentsDto } from './dto/filterComment.dto.js';
-import { CommentEntity } from './entities/comment.entity.js';
+import { CommentService } from '../services/comment.service.js';
+import { AccessGuard } from '../../common/guards/access.guard.js';
+import { CreateCommentDto } from '../dto/createComment.dto.js';
+import { UpdateCommentDto } from '../dto/updateComment.dto.js';
+import { FilterCommentsDto } from '../dto/filterComment.dto.js';
+import { CommentEntity } from '../entities/comment.entity.js';
 import {
   ApiBadRequestResponse,
-  ApiCreatedResponse,
-  ApiForbiddenResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
-  ApiOkResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Request } from 'express';
-import { ApiPaginatedResponse } from '../common/decorators/apiPaginatedResponse.decorator.js';
-import { Pagination } from 'src/common/types/IPagination.type.js';
+import { ApiPaginatedResponse } from '../../common/decorators/apiPaginatedResponse.decorator.js';
+import { Pagination } from '../../common/types/IPagination.type.js';
+import { ApiSingleResponse } from '../../common/decorators/apiSingleResponse.decorator.js';
 
 @ApiTags('comments')
 @ApiBadRequestResponse()
-@ApiNotFoundResponse()
-@UseInterceptors(ClassSerializerInterceptor)
 @Controller('comments')
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
+  @ApiNotFoundResponse()
   @ApiPaginatedResponse(CommentEntity)
   @Get('/')
   async findAll(@Query() query: FilterCommentsDto): Promise<Pagination<CommentEntity>> {
@@ -57,8 +54,8 @@ export class CommentController {
     };
   }
 
-  @ApiNotFoundResponse()
-  @ApiCreatedResponse()
+  @ApiUnauthorizedResponse()
+  @ApiSingleResponse(CommentEntity, 201)
   @UseGuards(AccessGuard)
   @Post('/')
   async createComment(@Req() req: Request, @Body() body: CreateCommentDto): Promise<CommentEntity> {
@@ -66,10 +63,8 @@ export class CommentController {
     return new CommentEntity(doc);
   }
 
-  @ApiNotFoundResponse()
-  @ApiForbiddenResponse()
-  @ApiBadRequestResponse()
-  @ApiOkResponse()
+  @ApiUnauthorizedResponse()
+  @ApiSingleResponse(CommentEntity)
   @UseGuards(AccessGuard)
   @Patch(':id')
   async updateComment(
@@ -83,36 +78,13 @@ export class CommentController {
     return new CommentEntity(doc);
   }
 
-  @ApiNotFoundResponse()
-  @ApiForbiddenResponse()
-  @ApiOkResponse()
+  @ApiNoContentResponse()
+  @ApiUnauthorizedResponse()
   @UseGuards(AccessGuard)
   @Delete(':id')
   async deleteComment(@Req() req: Request, @Param('id') id: number) {
     if (!id) throw new BadRequestException('Такого коментаря не існує!');
 
     return await this.commentService.delete(id, req.user.id);
-  }
-}
-
-@ApiBadRequestResponse()
-@ApiOkResponse({ type: CommentEntity })
-@UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(AccessGuard)
-@Controller('comments/:id/likes')
-export class CommentLikesController {
-  constructor(private readonly commentService: CommentService) {}
-
-  @Post(':id/like')
-  async addLikeToComment(@Param('id') id: number, @Req() req: Request): Promise<CommentEntity> {
-    const doc = await this.commentService.addlike(id, req.user.id);
-
-    return new CommentEntity(doc);
-  }
-
-  @Delete(':id/like')
-  async removelikeFromComment(@Param('id') id: number, @Req() req: Request): Promise<CommentEntity> {
-    const doc = await this.commentService.removeLike(id, req.user.id);
-    return new CommentEntity(doc);
   }
 }

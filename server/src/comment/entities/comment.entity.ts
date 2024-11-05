@@ -3,8 +3,8 @@ import { ReplyEntity } from './reply.entity.js';
 import { Comment } from '../types/comment.type.js';
 
 export class CommentEntity extends ReplyEntity {
-  @ApiProperty({ type: () => [CommentEntity] })
-  replies?: CommentEntity[];
+  @ApiProperty({ type: [ReplyEntity] })
+  readonly replies: ReplyEntity[];
 
   constructor(comment: Comment) {
     super(comment);

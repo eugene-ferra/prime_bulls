@@ -33,8 +33,8 @@ export class ReviewService {
 
   async delete(id: number, userId: number): Promise<void> {
     const review = await this.findById(id);
-    if (!review) throw new BadRequestException('Відгук не знайдено!');
 
+    if (!review) throw new BadRequestException('Відгук не знайдено!');
     if (review.userId !== userId) throw new BadRequestException('Ви не маєте права видаляти цей відгук!');
 
     await this.reviewImageService.removeImages(review);
@@ -48,8 +48,8 @@ export class ReviewService {
     files?: Express.Multer.File[],
   ): Promise<Review> {
     const review = await this.findById(id);
-    if (!review) throw new BadRequestException('Відгук не знайдено!');
 
+    if (!review) throw new BadRequestException('Відгук не знайдено!');
     if (review.userId !== userId) throw new BadRequestException('Ви не маєте права редагувати цей відгук!');
 
     await this.prismaService.review.update({ where: { id }, data });
@@ -113,7 +113,7 @@ export class ReviewService {
       },
     });
 
-    if (!doc) throw new BadRequestException('Відгук не знайдено!');
+    if (!doc) return null;
 
     const docWithReplyCount = {
       ...doc,

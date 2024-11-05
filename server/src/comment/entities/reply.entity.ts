@@ -4,22 +4,22 @@ import { Reply } from '../types/reply.type.js';
 
 export class ReplyEntity {
   @ApiProperty()
-  id: number;
+  readonly id: number;
 
   @ApiProperty()
-  parentCommentId: number;
+  readonly parentCommentId: number;
 
   @ApiProperty()
-  content: string;
+  readonly content: string;
 
-  @ApiProperty({ type: () => AuthorEntity })
-  user: AuthorEntity;
-
-  @ApiProperty()
-  replyCount: number;
+  @ApiProperty({ type: AuthorEntity })
+  readonly user: AuthorEntity;
 
   @ApiProperty()
-  likes: number;
+  readonly replyCount: number;
+
+  @ApiProperty()
+  readonly likes: number;
 
   constructor(reply: Reply) {
     this.id = reply.id;

@@ -57,6 +57,10 @@ export class PostService {
     });
   }
 
+  async isExist(id: number): Promise<boolean> {
+    return !!(await this.prisma.post.findUnique({ where: { id } }));
+  }
+
   private getWhereClause(payload: FilterPostsDto): Prisma.PostWhereInput {
     let where: Prisma.PostWhereInput = {};
 
