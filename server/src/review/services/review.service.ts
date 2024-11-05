@@ -8,14 +8,12 @@ import { FilterReviewDto } from '../dto/filterReview.dto.js';
 import { Prisma } from '@prisma/client';
 import { Review } from '../types/review.type.js';
 import { PaginatedResult } from '../../common/types/paginatedResult.type.js';
-import { ReviewLikeService } from './reviewLike.service.js';
 import { ReviewImageService } from './reviewImage.service.js';
 
 @Injectable()
 export class ReviewService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly reviewLikeService: ReviewLikeService,
     private readonly productService: ProductService,
     private readonly userService: UserService,
     private readonly reviewImageService: ReviewImageService,
@@ -129,21 +127,6 @@ export class ReviewService {
     };
 
     return docWithReplyCount;
-  }
-
-  async addlike(reviewId: number, userId: number): Promise<Review> {
-    const review = await this.findById(reviewId);
-    if (!review) throw new BadRequestException('Відгук не знайдено!');
-
-    await this.reviewLikeService.addlike(review, userId);
-
-    return await this.findById(reviewId);
-  }
-
-  async removeLike(reviewId: number, userId: number): Promise<Review> {
-    await this.reviewLikeService.removeLike(reviewId, userId);
-
-    return await this.findById(reviewId);
   }
 
   private getWhereClause(payload: FilterReviewDto): Prisma.ReviewWhereInput {

@@ -13,11 +13,15 @@ export class ReviewLikeService {
   async addlike(review: Review, userId: number): Promise<void> {
     if (!(await this.userService.isExists(userId))) throw new BadRequestException('Користувача не знайдено!');
 
-    const isLiked = review.likes.some((like) => like.userId === userId);
-    if (!isLiked) await this.prismaService.reviewLike.create({ data: { reviewId: review.id, userId } });
+    if (!(await this.isLiked(review, userId)))
+      await this.prismaService.reviewLike.create({ data: { reviewId: review.id, userId } });
   }
 
   async removeLike(reviewId: number, userId: number): Promise<void> {
     await this.prismaService.reviewLike.deleteMany({ where: { reviewId, userId } });
+  }
+
+  private async isLiked(review: Review, userId: number): Promise<boolean> {
+    return review.likes.some((like) => like.userId === userId);
   }
 }

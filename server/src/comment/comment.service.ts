@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateCommentDto } from './dto/createComment.dto.js';
-import { PostService } from '../post/post.service.js';
+import { PostService } from '../post/services/post.service.js';
 import { UserService } from '../user/user.service.js';
 import { UpdateCommentDto } from './dto/updateComment.dto.js';
 import { FilterCommentsDto } from './dto/filterComment.dto.js';

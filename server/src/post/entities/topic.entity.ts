@@ -3,13 +3,13 @@ import { Topic } from '../types/topic.type.js';
 
 export class TopicEntity {
   @ApiProperty()
-  id: number;
+  readonly id: number;
 
   @ApiProperty()
-  name: string;
+  readonly name: string;
 
   @ApiProperty()
-  slug: string;
+  readonly slug: string;
 
   constructor(data: Topic) {
     this.id = data.id;

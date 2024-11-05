@@ -5,31 +5,31 @@ import { Post } from '../types/Post.type.js';
 
 export class SimplePostEntity {
   @ApiProperty()
-  id: number;
+  readonly id: number;
 
   @ApiProperty()
-  title: string;
+  readonly title: string;
 
   @ApiProperty()
-  slug: string;
+  readonly slug: string;
 
   @ApiProperty()
-  content: string;
+  readonly content: string;
 
-  @ApiProperty({ type: () => ImageEntity })
-  coverImage: ImageEntity;
+  @ApiProperty({ type: ImageEntity })
+  readonly coverImage: ImageEntity;
 
-  @ApiProperty({ type: () => [TopicEntity] })
-  topics: TopicEntity[];
-
-  @ApiProperty()
-  likes: number;
+  @ApiProperty({ type: [TopicEntity] })
+  readonly topics: TopicEntity[];
 
   @ApiProperty()
-  views: number;
+  readonly likes: number;
 
   @ApiProperty()
-  createdAt: Date;
+  readonly views: number;
+
+  @ApiProperty()
+  readonly createdAt: Date;
 
   constructor(post: Post) {
     this.id = post.id;

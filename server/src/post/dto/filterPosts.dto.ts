@@ -16,5 +16,5 @@ export class FilterPostsDto extends BaseFilterDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsBoolean({ message: 'Некорректний статус' })
-  isActive?: boolean;
+  isActive?: boolean = true;
 }
