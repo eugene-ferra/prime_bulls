@@ -1,11 +1,21 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Address } from '../types/address.type.js';
 
 export class AddressEntity {
-  id: number;
-  city: string;
-  street: string;
-  house: string;
-  flat: string;
+  @ApiProperty()
+  readonly id: number;
+
+  @ApiProperty()
+  readonly city: string;
+
+  @ApiProperty()
+  readonly street: string;
+
+  @ApiProperty()
+  readonly house: string;
+
+  @ApiProperty()
+  readonly flat: string;
 
   constructor(address: Address) {
     this.id = address.id;

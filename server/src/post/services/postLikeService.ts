@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { UserService } from '../../user/user.service.js';
+import { UserService } from '../../user/services/user.service.js';
 import { Post } from '../types/Post.type.js';
+import { UserHelperService } from '../../user/services/userHelper.service.js';
 
 @Injectable()
 export class PostLikeService {

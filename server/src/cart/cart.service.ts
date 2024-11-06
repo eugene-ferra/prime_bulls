@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { CartItemDto } from './dto/cartItem.dto.js';
 import { UpdateCartItemDto } from './dto/updateCartItem.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { UserService } from '../user/user.service.js';
+import { UserService } from '../user/services/user.service.js';
 import { ProductService } from '../product/services/product.service.js';
 import { VariantDto } from './dto/variantDto.js';
 import { Cart } from './types/cart.type.js';
@@ -19,7 +19,7 @@ export class CartService {
   async addItem(userId: number, createCartDto: CartItemDto): Promise<Cart> {
     const { productId, quantity, variants } = createCartDto;
 
-    const user = await this.userService.findById(userId);
+    const user = await this.userService.findOne(userId);
     if (!user) throw new BadRequestException('Користувача не знайдено!');
 
     const product = await this.productService.isExists(productId);

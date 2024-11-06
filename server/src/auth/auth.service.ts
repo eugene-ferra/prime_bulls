@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { UserService } from '../user/user.service.js';
+import { UserService } from '../user/services/user.service.js';
 import { TokensDto } from './dto/tokens.dto.js';
 import { RegisterByEmailDto } from './dto/registerByEmail.dto.js';
 import { LoginByEmailDto } from './dto/loginByEmail.dto.js';
@@ -26,7 +26,8 @@ export class AuthService {
   async loginByEmail(data: LoginByEmailDto, device: DeviceDto): Promise<TokensDto> {
     const { email, password } = data;
     const user = await this.userService.findByEmail(email);
-    const isPasswordCorrect = await this.userService.isCorrectPassword(password, user.password);
+
+    const isPasswordCorrect = await this.userService.isPasswordCorrect(password, user.password);
 
     if (!user || !isPasswordCorrect) throw new BadRequestException('Неправильний email або пароль!');
 
@@ -40,7 +41,7 @@ export class AuthService {
   }
 
   async refresh(userId: number, device: DeviceDto): Promise<TokensDto> {
-    const { id, role } = await this.userService.findById(userId);
+    const { id, role } = await this.userService.findOne(userId);
     const tokens = await this.tokenService.generateTokens({ id, role });
     await this.sessionService.saveSession(id, tokens.refreshToken, device);
 

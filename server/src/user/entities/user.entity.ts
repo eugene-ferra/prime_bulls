@@ -5,49 +5,49 @@ import { AddressEntity } from './address.entity.js';
 
 export class UserEntity {
   @ApiProperty()
-  id: number;
+  readonly id: number;
 
   @ApiProperty()
-  name: string;
+  readonly name: string;
 
   @ApiProperty()
-  lastName: string;
+  readonly lastName: string;
 
   @ApiProperty()
-  phone: string;
+  readonly phone: string;
 
   @ApiProperty()
-  email: string;
+  readonly email: string;
 
   @ApiProperty()
-  avatar: ImageEntity;
+  readonly avatar: ImageEntity;
 
   @ApiProperty()
-  createdAt: Date;
+  readonly createdAt: Date;
 
   @ApiProperty()
-  role: string;
+  readonly role: string;
 
-  @ApiProperty()
-  reviews: number[];
+  @ApiProperty({ type: [Number] })
+  readonly reviews: number[];
 
-  @ApiProperty()
-  comments: number[];
+  @ApiProperty({ type: [Number] })
+  readonly comments: number[];
 
-  @ApiProperty()
-  commentLikes: number[];
+  @ApiProperty({ type: [Number] })
+  readonly commentLikes: number[];
 
-  @ApiProperty()
-  reviewLikes: number[];
+  @ApiProperty({ type: [Number] })
+  readonly reviewLikes: number[];
 
-  @ApiProperty()
-  postLikes: number[];
+  @ApiProperty({ type: [Number] })
+  readonly postLikes: number[];
 
-  @ApiProperty()
-  savedProducts: number[];
+  @ApiProperty({ type: [Number] })
+  readonly savedProducts: number[];
 
-  @ApiProperty()
-  addresses: AddressEntity[];
+  @ApiProperty({ type: [AddressEntity] })
+  readonly addresses: AddressEntity[];
 
   constructor(user: User) {
     this.id = user.id;

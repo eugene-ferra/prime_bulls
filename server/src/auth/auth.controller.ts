@@ -19,7 +19,7 @@ import { AccessGuard } from '../common/guards/access.guard.js';
 import { setAuthCookies } from './helpers/setAuthCookies.js';
 import { clearAuthCookies } from './helpers/clearAuthCookies.js';
 import { ForgotPasswordDto } from './dto/forgotPassword.dto.js';
-import { UserService } from '../user/user.service.js';
+import { UserService } from '../user/services/user.service.js';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -100,7 +100,7 @@ export class AuthController {
   @Post('forgot-password')
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     const { email } = body;
-    const { token, expiredAt } = await this.userService.generateResetToken(email);
+    const { token, expiredAt } = await this.userService.getResetToken(email);
 
     await this.mailService.sendForgotPassword(email, token, expiredAt);
   }

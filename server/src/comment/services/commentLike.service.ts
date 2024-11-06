@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { UserService } from '../../user/user.service.js';
+import { UserService } from '../../user/services/user.service.js';
 import { Comment } from '../types/comment.type.js';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class CommentLikeService {
   ) {}
 
   async addlike(comment: Comment, userId: number): Promise<void> {
-    const user = await this.userService.findById(userId);
+    const user = await this.userService.findOne(userId);
     if (!user) throw new BadRequestException('Користувача не знайдено!');
 
     if (!(await this.isLiked(comment, userId)))
