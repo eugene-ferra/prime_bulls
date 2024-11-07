@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsOptional, Min } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, Min, ValidateNested } from 'class-validator';
 import { VariantDto } from './variantDto.js';
+import { Type } from 'class-transformer';
 
 export class CartItemDto {
   @ApiProperty()
@@ -14,6 +15,7 @@ export class CartItemDto {
 
   @ApiPropertyOptional({ type: [VariantDto] })
   @IsOptional()
-  @IsArray()
+  @ValidateNested({ each: true, message: 'Неправильні опції товару!' })
+  @Type(() => VariantDto)
   variants?: VariantDto[];
 }

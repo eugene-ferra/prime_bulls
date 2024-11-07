@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber } from 'class-validator';
 
 export class VariantDto {
   @ApiProperty()
-  @IsNumber()
-  variantNameId: number;
+  @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 0 }, { message: 'Некорректний id' })
+  nameId: number;
 
   @ApiProperty()
-  @IsNumber()
-  variantValueId: number;
+  @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 0 }, { message: 'Некорректний id' })
+  valueId: number;
 }
