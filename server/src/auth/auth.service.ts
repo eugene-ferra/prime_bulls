@@ -4,40 +4,40 @@ import { TokensDto } from './dto/tokens.dto.js';
 import { RegisterByEmailDto } from './dto/registerByEmail.dto.js';
 import { LoginByEmailDto } from './dto/loginByEmail.dto.js';
 import { DeviceDto } from '../common/dto/device.dto.js';
-import { SessionService } from './session.service.js';
-import { TokenService } from './token.service.js';
+import { SessionRepository } from './services/session.service.js';
+import { TokenService } from './services/token.service.js';
+import { AuthData } from './types/auth.type.js';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly sessionService: SessionService,
+    private readonly sessionService: SessionRepository,
     private readonly userService: UserService,
     private readonly tokenService: TokenService,
   ) {}
 
-  async registerByEmail(data: RegisterByEmailDto, device: DeviceDto): Promise<TokensDto> {
+  async registerByEmail(data: RegisterByEmailDto, device: DeviceDto): Promise<AuthData> {
     const { id, role } = await this.userService.create(data);
+
     const { accessToken, refreshToken } = await this.tokenService.generateTokens({ id, role });
     await this.sessionService.saveSession(id, refreshToken, device);
 
-    return { accessToken, refreshToken };
+    return { tokens: { accessToken, refreshToken }, userId: id };
   }
 
-  async loginByEmail(data: LoginByEmailDto, device: DeviceDto): Promise<TokensDto> {
+  async loginByEmail(data: LoginByEmailDto, device: DeviceDto): Promise<AuthData> {
     const { email, password } = data;
     const user = await this.userService.findByEmail(email);
 
     const isPasswordCorrect = await this.userService.isPasswordCorrect(password, user.password);
 
     if (!user || !isPasswordCorrect) throw new BadRequestException('Неправильний email або пароль!');
+    const { id, role } = user;
 
-    const { accessToken, refreshToken } = await this.tokenService.generateTokens({
-      id: user.id,
-      role: user.role,
-    });
+    const { accessToken, refreshToken } = await this.tokenService.generateTokens({ id, role });
     await this.sessionService.saveSession(user.id, refreshToken, device);
 
-    return { accessToken, refreshToken };
+    return { tokens: { accessToken, refreshToken }, userId: user.id };
   }
 
   async refresh(userId: number, device: DeviceDto): Promise<TokensDto> {

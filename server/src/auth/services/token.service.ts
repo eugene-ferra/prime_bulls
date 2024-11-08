@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { TokensDto } from './dto/tokens.dto.js';
-import CurrentUserDto from '../common/dto/currentUser.dto.js';
+import { TokensDto } from '../dto/tokens.dto.js';
+import CurrentUserDto from '../../common/dto/currentUser.dto.js';
 
 @Injectable()
 export class TokenService {

@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service.js';
-import { DeviceDto } from '../common/dto/device.dto.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { DeviceDto } from '../../common/dto/device.dto.js';
 
 @Injectable()
-export class SessionService {
+export class SessionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async saveSession(userId: number, token: string, device: DeviceDto) {

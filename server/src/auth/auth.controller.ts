@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Ip, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterByEmailDto } from './dto/registerByEmail.dto.js';
 import { DeviceDto } from '../common/dto/device.dto.js';
@@ -7,9 +7,7 @@ import { MailService } from '../mail/mail.service.js';
 import { LoginByEmailDto } from './dto/loginByEmail.dto.js';
 import {
   ApiBadRequestResponse,
-  ApiBody,
   ApiConflictResponse,
-  ApiCreatedResponse,
   ApiOkResponse,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -20,8 +18,12 @@ import { setAuthCookies } from './helpers/setAuthCookies.js';
 import { clearAuthCookies } from './helpers/clearAuthCookies.js';
 import { ForgotPasswordDto } from './dto/forgotPassword.dto.js';
 import { UserService } from '../user/services/user.service.js';
+import { Device } from '../common/decorators/device.decorator.js';
+import { ApiSingleResponse } from '../common/decorators/apiSingleResponse.decorator.js';
+import { UserEntity } from '../user/entities/user.entity.js';
 
 @ApiTags('auth')
+@ApiBadRequestResponse()
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -30,72 +32,39 @@ export class AuthController {
     private readonly userService: UserService,
   ) {}
 
-  @ApiBadRequestResponse()
   @ApiConflictResponse()
-  @ApiCreatedResponse({
-    description: 'creates user, returns access and refresh tokens via cookies and sends a confirmation email',
-  })
-  @ApiBody({ type: RegisterByEmailDto })
+  @ApiSingleResponse(UserEntity)
   @Post('register/email')
-  async registerByEmail(
-    @Headers('user-agent') userAgent: string,
-    @Body() body: RegisterByEmailDto,
-    @Ip() ip: string,
-    @Res() res: Response,
-  ) {
-    const device: DeviceDto = { userAgent, ip };
-    const tokens = await this.authService.registerByEmail(body, device);
-
+  async registerByEmail(@Device() device: DeviceDto, @Body() body: RegisterByEmailDto, @Res() res: Response) {
+    const data = await this.authService.registerByEmail(body, device);
     await this.mailService.sendUserConfirmation(body.name, body.email);
+    const user = await this.userService.findOne(data.userId);
 
-    setAuthCookies(res, tokens);
-
-    res.status(201).json({ status: 'success' });
+    setAuthCookies(res, data.tokens);
+    res.status(201).json({ status: 'success', body: new UserEntity(user) });
   }
 
-  @ApiBadRequestResponse()
-  @ApiOkResponse({
-    description: 'logging user in and returns access and refresh token via cookies',
-  })
-  @ApiBody({ type: LoginByEmailDto })
+  @ApiSingleResponse(UserEntity)
   @Post('login/email')
-  async loginByEmail(
-    @Body() body: LoginByEmailDto,
-    @Headers('user-agent') userAgent: string,
-    @Ip() ip: string,
-    @Res() res: Response,
-  ) {
-    const device: DeviceDto = { userAgent, ip };
-    const tokens = await this.authService.loginByEmail(body, device);
+  async loginByEmail(@Body() body: LoginByEmailDto, @Device() device: DeviceDto, @Res() res: Response) {
+    const data = await this.authService.loginByEmail(body, device);
+    const user = await this.userService.findOne(data.userId);
 
-    setAuthCookies(res, tokens);
-
-    res.status(201).json({ status: 'success' });
+    setAuthCookies(res, data.tokens);
+    res.status(201).json({ status: 'success', body: new UserEntity(user) });
   }
 
   @ApiUnauthorizedResponse()
-  @ApiBadRequestResponse()
-  @ApiOkResponse({
-    description: 'refreshes access token and returns new access and refresh tokens via cookies',
-  })
+  @ApiOkResponse()
   @UseGuards(RefreshGuard)
   @Post('refresh')
-  async refresh(
-    @Req() req: Request,
-    @Headers('user-agent') userAgent: string,
-    @Ip() ip: string,
-    @Res() res: Response,
-  ) {
-    const device: DeviceDto = { userAgent, ip };
-
+  async refresh(@Req() req: Request, @Device() device: DeviceDto, @Res() res: Response) {
     const tokens = await this.authService.refresh(req.user.id, device);
 
     setAuthCookies(res, tokens);
-
     res.status(200).json({ status: 'success' });
   }
 
-  @ApiBadRequestResponse()
   @ApiOkResponse()
   @Post('forgot-password')
   async forgotPassword(@Body() body: ForgotPasswordDto) {
@@ -105,37 +74,30 @@ export class AuthController {
     await this.mailService.sendForgotPassword(email, token, expiredAt);
   }
 
-  @ApiBadRequestResponse()
-  @ApiOkResponse({
-    description: 'resets user password',
-  })
+  @ApiSingleResponse(UserEntity)
   @Patch('reset-password/:token')
   async resetPassword(@Param('token') token: string, @Body() body: LoginByEmailDto) {
     await this.userService.resetPassword(body.email, token, body.password);
+
+    const user = await this.userService.findByEmail(body.email);
+
+    return new UserEntity(user);
   }
 
   @ApiUnauthorizedResponse()
-  @ApiBadRequestResponse()
-  @ApiOkResponse({
-    description: 'logs user out from one device',
-  })
+  @ApiOkResponse()
   @UseGuards(AccessGuard)
   @Get('logout/:ip/:userAgent')
   async logoutOneDevice(@Req() req: Request, @Param() device: DeviceDto, @Res() res: Response) {
     await this.authService.logout(req.user.id, device);
 
-    if (device.ip === req.ip && device.userAgent === req.headers['user-agent']) {
-      clearAuthCookies(res);
-    }
+    if (device.ip === req.ip && device.userAgent === req.headers['user-agent']) clearAuthCookies(res);
 
     res.status(200).json({ status: 'success' });
   }
 
   @ApiUnauthorizedResponse()
-  @ApiBadRequestResponse()
-  @ApiOkResponse({
-    description: 'logs user out from all devices',
-  })
+  @ApiOkResponse()
   @UseGuards(AccessGuard)
   @Get('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
